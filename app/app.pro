@@ -22,4 +22,6 @@ DISTFILES += resources/postinst
 
 RESOURCES +=
 
+FORMS +=
+
 

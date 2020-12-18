@@ -642,6 +642,14 @@ void GraphicElement::setHasFrequency( bool hasFrequency ) {
   m_hasFrequency = hasFrequency;
 }
 
+bool GraphicElement::hasCustomConfig( ) const {
+  return( m_hasCustomConfig );
+}
+
+void GraphicElement::setHasCustomConfig( bool hasCustomConfig ) {
+  m_hasCustomConfig = hasCustomConfig;
+}
+
 bool GraphicElement::hasLabel( ) const {
   return( m_hasLabel );
 }
@@ -701,9 +709,11 @@ void GraphicElement::setOutputSize( const int size ) {
     }
     else {
       while( outputSize( ) > size ) {
+        delete m_outputs.back( );
         m_outputs.pop_back( );
       }
     }
+    updatePorts( );
   }
 }
 

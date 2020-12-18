@@ -46,6 +46,7 @@ private slots:
   void on_lineEditElementLabel_editingFinished( );
 
   void on_comboBoxInputSz_currentIndexChanged( int index );
+  void on_comboBoxOutputSz_currentIndexChanged( int index );
 
   void on_doubleSpinBoxFrequency_editingFinished( );
 
@@ -72,10 +73,10 @@ private:
   QVector< GraphicElement* > m_elements;
   Scene *scene;
   Editor *editor;
-  bool hasAnyProperty, hasLabel, hasColors, hasFrequency, hasAudio;
-  bool canChangeInputSize, hasTrigger, hasRotation, canChangeSkin;
+  bool hasAnyProperty, hasLabel, hasColors, hasFrequency, hasAudio, hasCustomConfig;
+  bool canChangeInputSize, canChangeOutputSize, hasTrigger, hasRotation, canChangeSkin;
   bool hasSameLabel, hasSameColors, hasSameFrequency;
-  bool hasSameInputSize, hasSameTrigger, canMorph, hasSameType;
+  bool hasSameInputSize, hasSameOutputSize, hasSameTrigger, canMorph, hasSameType;
   bool hasSameAudio;
   bool hasElements;
 

@@ -40,6 +40,7 @@ public slots:
   void rotate( bool rotateRight );
 
   void receiveCommand( QUndoCommand *cmd );
+  void customAction( );
   void copyAction( );
   void cutAction( );
   void pasteAction( );

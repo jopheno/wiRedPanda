@@ -72,6 +72,9 @@
          <layout class="QGridLayout" name="gridLayout">
           <item row="4" column="0" colspan="3">
            <widget class="QTabWidget" name="tabWidget">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
               <horstretch>0</horstretch>
@@ -105,8 +108,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>238</width>
-                   <height>248</height>
+                   <width>236</width>
+                   <height>258</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout">
@@ -147,8 +150,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>238</width>
-                   <height>248</height>
+                   <width>236</width>
+                   <height>258</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -189,8 +192,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>238</width>
-                   <height>248</height>
+                   <width>236</width>
+                   <height>258</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -231,13 +234,55 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>238</width>
-                   <height>248</height>
+                   <width>236</width>
+                   <height>258</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_4">
                   <item>
                    <spacer name="verticalSpacer_BOX">
+                    <property name="orientation">
+                     <enum>Qt::Vertical</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>20</width>
+                      <height>40</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="remote">
+             <attribute name="title">
+              <string>Remote</string>
+             </attribute>
+             <layout class="QGridLayout" name="gridLayout_9">
+              <item row="0" column="0">
+               <widget class="QScrollArea" name="scrollArea_Remote">
+                <property name="frameShape">
+                 <enum>QFrame::NoFrame</enum>
+                </property>
+                <property name="widgetResizable">
+                 <bool>true</bool>
+                </property>
+                <widget class="QWidget" name="scrollAreaWidgetContents_Remote">
+                 <property name="geometry">
+                  <rect>
+                   <x>0</x>
+                   <y>0</y>
+                   <width>236</width>
+                   <height>258</height>
+                  </rect>
+                 </property>
+                 <layout class="QVBoxLayout" name="verticalLayout_7">
+                  <item>
+                   <spacer name="verticalSpacer_Remote">
                     <property name="orientation">
                      <enum>Qt::Vertical</enum>
                     </property>
@@ -332,7 +377,7 @@
                <x>0</x>
                <y>0</y>
                <width>258</width>
-               <height>295</height>
+               <height>300</height>
               </rect>
              </property>
              <layout class="QGridLayout" name="gridLayout_7">
@@ -1021,10 +1066,10 @@
   <tabstop>scrollAreaGates</tabstop>
  </tabstops>
  <resources>
-  <include location="resources/basic/basic.qrc"/>
-  <include location="resources/toolbar/toolbar.qrc"/>
-  <include location="resources/input/input.qrc"/>
   <include location="resources/resources.qrc"/>
+  <include location="resources/basic/basic.qrc"/>
+  <include location="resources/input/input.qrc"/>
+  <include location="resources/toolbar/toolbar.qrc"/>
  </resources>
  <connections/>
 </ui>

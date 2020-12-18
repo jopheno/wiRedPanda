@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/remote">
+        <file>fpgaBox.png</file>
+        <file>unavailable.png</file>
+        <file>online.png</file>
+        <file>searching.png</file>
+        <file>offline.png</file>
+    </qresource>
+</RCC>

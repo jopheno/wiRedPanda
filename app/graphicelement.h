@@ -19,11 +19,11 @@
 enum class ElementType : uint_fast8_t {
   UNKNOWN, BUTTON, SWITCH, LED, NOT, AND, OR, NAND, NOR, CLOCK, XOR, XNOR, VCC, GND, DISPLAY,
   DLATCH, JKLATCH, DFLIPFLOP, JKFLIPFLOP, SRFLIPFLOP, TFLIPFLOP, BOX, NODE, MUX, DEMUX,
-  BUZZER, DISPLAY14
+  BUZZER, DISPLAY14, FPGA
 };
 
 enum class ElementGroup : uint_fast8_t {
-  UNKNOWN, OTHER, BOX, INPUT, GATE, MEMORY, OUTPUT, MUX, STATICINPUT
+  UNKNOWN, OTHER, BOX, INPUT, GATE, MEMORY, OUTPUT, MUX, STATICINPUT, REMOTE
 };
 
 
@@ -131,6 +131,8 @@ public:
 
   bool hasFrequency( ) const;
 
+  bool hasCustomConfig( ) const;
+
   bool hasColors( ) const;
 
   bool hasTrigger( ) const;
@@ -179,6 +181,7 @@ protected:
   void setRotatable( bool rotatable );
   void setHasLabel( bool hasLabel );
   void setHasFrequency( bool hasFrequency );
+  void setHasCustomConfig( bool hasCustomConfig );
   void setHasColors( bool hasColors );
   void setCanChangeSkin ( bool canChangeSkin );
   void setHasTrigger( bool hasTrigger );
@@ -209,6 +212,7 @@ private:
   bool m_hasColors;
   bool m_hasTrigger;
   bool m_hasAudio;
+  bool m_hasCustomConfig;
   bool m_disabled;
   QString m_labelText;
   QKeySequence m_trigger;

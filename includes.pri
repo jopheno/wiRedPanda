@@ -1,4 +1,4 @@
-QT       += core gui printsupport charts multimedia widgets
+QT       += core gui printsupport charts multimedia widgets network xml
 VERSION = 2.7
 
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
@@ -71,7 +71,9 @@ SOURCES += \
     $$PWD/app/boxprototypeimpl.cpp \
     $$PWD/app/elementmapping.cpp \
     $$PWD/app/boxmapping.cpp \
-    $$PWD/app/common.cpp
+    $$PWD/app/common.cpp \
+    $$PWD/app/fpgaconfig.cpp \
+    $$PWD/app/protocol.cpp
 
 HEADERS  +=  \
     $$PWD/app/common.h \
@@ -105,6 +107,9 @@ HEADERS  +=  \
     $$PWD/app/boxprototypeimpl.h \
     $$PWD/app/elementmapping.h \
     $$PWD/app/boxmapping.h \
+    $$PWD/app/fpgaconfig.h \
+    $$PWD/app/network.h \
+    $$PWD/app/protocol.h
 
 INCLUDEPATH += \
     $$PWD/app \
@@ -114,7 +119,8 @@ INCLUDEPATH += \
 FORMS    += \
     $$PWD/app/mainwindow.ui \
     $$PWD/app/elementeditor.ui \
-    $$PWD/app/simplewaveform.ui
+    $$PWD/app/simplewaveform.ui \
+    $$PWD/app/fpgaconfig.ui
 
 RESOURCES += \
     $$PWD/app/resources/resources.qrc\
@@ -123,7 +129,8 @@ RESOURCES += \
     $$PWD/app/resources/output/output.qrc\
     $$PWD/app/resources/toolbar/toolbar.qrc \
     $$PWD/app/resources/memory/dark/memory_dark.qrc \
-    $$PWD/app/resources/memory/light/memory_light.qrc
+    $$PWD/app/resources/memory/light/memory_light.qrc \
+    $$PWD/app/resources/remote/remote.qrc
 
 RESOURCES += $$PWD/app/resources/translations.qrc
 

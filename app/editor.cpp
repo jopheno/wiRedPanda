@@ -10,6 +10,7 @@
 #include "nodes/qneconnection.h"
 #include "serializationfunctions.h"
 #include "thememanager.h"
+#include "fpgaconfig.h"
 
 #include <iostream>
 #include <QApplication>
@@ -830,6 +831,16 @@ void Editor::updateVisibility( ) {
 
 void Editor::receiveCommand( QUndoCommand *cmd ) {
   undoStack->push( cmd );
+}
+
+void Editor::customAction( ) {
+  QVector< GraphicElement* > elms = scene->selectedElements( );
+  if( elms.size() == 1 ) {
+      FpgaConfig fc( this, mainWindow, elms.first() );
+      fc.start( );
+  } else {
+      QMessageBox::warning( mainWindow, tr( "ERROR" ), "Unable to trigger configure for more than a remote element at once", QMessageBox::Ok );
+  }
 }
 
 void Editor::copyAction( ) {

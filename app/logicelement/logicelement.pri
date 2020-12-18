@@ -15,7 +15,8 @@ HEADERS += \
     $$PWD/logicdflipflop.h \
     $$PWD/logicdlatch.h \
     $$PWD/logicmux.h \
-    $$PWD/logicdemux.h
+    $$PWD/logicdemux.h \
+    $$PWD/logicfpga.h
 
 SOURCES += \
     $$PWD/logicnode.cpp \
@@ -34,4 +35,5 @@ SOURCES += \
     $$PWD/logicdflipflop.cpp \
     $$PWD/logicdlatch.cpp \
     $$PWD/logicmux.cpp \
-    $$PWD/logicdemux.cpp
+    $$PWD/logicdemux.cpp \
+    $$PWD/logicfpga.cpp

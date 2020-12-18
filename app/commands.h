@@ -186,10 +186,37 @@ private:
 
 };
 
+class ChangeOutputSZCommand : public QUndoCommand {
+  Q_DECLARE_TR_FUNCTIONS( ChangeOutputSZCommand )
+public:
+  enum { Id = 109 };
+
+  explicit ChangeOutputSZCommand( const QVector< GraphicElement* > &elements,
+                                 int newOutputSize,
+                                 Editor *editor,
+                                 QUndoCommand *parent = nullptr );
+
+  virtual void undo( ) Q_DECL_OVERRIDE;
+  virtual void redo( ) Q_DECL_OVERRIDE;
+
+  int id( ) const Q_DECL_OVERRIDE {
+    return( Id );
+  }
+
+private:
+  QVector< int > elms;
+  QVector< int > order;
+  Editor *editor;
+  QGraphicsScene *scene;
+  QByteArray m_oldData;
+  int m_newOutputSize;
+
+};
+
 class FlipCommand : public QUndoCommand {
   Q_DECLARE_TR_FUNCTIONS( FlipHCommand )
 
-  enum { Id = 109 };
+  enum { Id = 110 };
 public:
   explicit FlipCommand( const QList< GraphicElement* > &aItems, int aAxis, QUndoCommand *parent = nullptr );
   virtual void undo( ) Q_DECL_OVERRIDE;

@@ -23,6 +23,9 @@
 #include "logicelement/logicxnor.h"
 #include "logicelement/logicxor.h"
 
+#include "fpga.h"
+#include "logicelement/logicfpga.h"
+
 #include <QDebug>
 
 ElementMapping::ElementMapping( const QVector< GraphicElement* > &elms, QString file ) :
@@ -163,6 +166,13 @@ LogicElement* ElementMapping::buildLogicElement( GraphicElement *elm ) {
       case ElementType::JKLATCH:
       //! TODO: TLATCH not yet implemented.
       return( new LogicDLatch( ) );
+      case ElementType::FPGA: {
+            Fpga* fpga;
+            if ((fpga = dynamic_cast<Fpga*>(elm)))
+                return( new LogicFpga( fpga ) );
+
+            throw std::runtime_error( "Unable to create an FPGA logic element: " + elm->objectName( ).toStdString( ) );
+      }
 
       default:
       throw std::runtime_error( "Not implemented yet: " + elm->objectName( ).toStdString( ) );

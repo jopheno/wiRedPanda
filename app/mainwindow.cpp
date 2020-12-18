@@ -808,6 +808,9 @@ void MainWindow::populateLeftMenu( ) {
   populateMenu( ui->verticalSpacer_Memory,
                 "DFLIPFLOP,DLATCH,JKFLIPFLOP,SRFLIPFLOP,TFLIPFLOP",
                 ui->scrollAreaWidgetContents_Memory->layout( ) );
+  populateMenu( ui->verticalSpacer_Remote,
+                "FPGA",
+                ui->scrollAreaWidgetContents_Remote->layout( ) );
 }
 
 

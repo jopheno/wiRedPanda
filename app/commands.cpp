@@ -691,6 +691,89 @@ void ChangeInputSZCommand::undo( ) {
 
 }
 
+ChangeOutputSZCommand::ChangeOutputSZCommand( const QVector< GraphicElement* > &elements,
+                                            int newOutputSize,
+                                            Editor *editor,
+                                            QUndoCommand *parent ) : QUndoCommand( parent ), editor( editor ) {
+  for( GraphicElement *elm : elements ) {
+    elms.append( elm->id( ) );
+  }
+  m_newOutputSize = newOutputSize;
+  if( !elements.isEmpty( ) ) {
+    scene = elements.front( )->scene( );
+  }
+  setText( tr( "Change output size to %1" ).arg( newOutputSize ) );
+}
+
+void ChangeOutputSZCommand::redo( ) {
+  COMMENT( "REDO " + text( ).toStdString( ), 0 );
+  const QVector< GraphicElement* > m_elements = findElements( elms ).toVector( );
+  if( !m_elements.isEmpty( ) && m_elements.front( )->scene( ) ) {
+    scene->clearSelection( );
+  }
+  QVector< GraphicElement* > serializationOrder;
+  m_oldData.clear( );
+  QDataStream dataStream( &m_oldData, QIODevice::WriteOnly );
+  for( int i = 0; i < m_elements.size( ); ++i ) {
+    GraphicElement *elm = m_elements[ i ];
+    elm->save( dataStream );
+    serializationOrder.append( elm );
+    for( int in = m_newOutputSize; in < elm->outputSize( ); ++in ) {
+      for( QNEConnection *conn : elm->output( in )->connections( ) ) {
+        QNEPort *otherPort = conn->otherPort( elm->output( in ) );
+        otherPort->graphicElement( )->save( dataStream );
+        serializationOrder.append( otherPort->graphicElement( ) );
+      }
+    }
+  }
+  for( int i = 0; i < m_elements.size( ); ++i ) {
+    GraphicElement *elm = m_elements[ i ];
+    for( int in = m_newOutputSize; in < elm->outputSize( ); ++in ) {
+      while( !elm->output( in )->connections( ).isEmpty( ) ) {
+        QNEConnection *conn = elm->output( in )->connections( ).front( );
+        conn->save( dataStream );
+        scene->removeItem( conn );
+        QNEPort *otherPort = conn->otherPort( elm->output( in ) );
+        elm->output( in )->disconnect( conn );
+        otherPort->disconnect( conn );
+      }
+    }
+    elm->setOutputSize( m_newOutputSize );
+    elm->setSelected( true );
+  }
+  order.clear( );
+  for( GraphicElement *elm : serializationOrder ) {
+    order.append( elm->id( ) );
+  }
+  emit editor->circuitHasChanged( );
+}
+
+void ChangeOutputSZCommand::undo( ) {
+  COMMENT( "UNDO " + text( ).toStdString( ), 0 );
+  const QVector< GraphicElement* > m_elements = findElements( elms ).toVector( );
+  const QVector< GraphicElement* > serializationOrder = findElements( order ).toVector( );
+  if( !m_elements.isEmpty( ) && m_elements.front( )->scene( ) ) {
+    scene->clearSelection( );
+  }
+  QDataStream dataStream( &m_oldData, QIODevice::ReadOnly );
+  double version = GlobalProperties::version;
+  QMap< quint64, QNEPort* > portMap;
+  for( GraphicElement *elm : serializationOrder ) {
+    elm->load( dataStream, portMap, version );
+  }
+  for( int i = 0; i < m_elements.size( ); ++i ) {
+    GraphicElement *elm = m_elements[ i ];
+    for( int in = m_newOutputSize; in < elm->outputSize( ); ++in ) {
+      QNEConnection *conn = ElementFactory::buildConnection( );
+      conn->load( dataStream, portMap );
+      scene->addItem( conn );
+    }
+    elm->setSelected( true );
+  }
+  emit editor->circuitHasChanged( );
+
+}
+
 FlipCommand::FlipCommand( const QList< GraphicElement* > &aItems, int aAxis, QUndoCommand *parent ) :
   QUndoCommand( parent ) {
   axis = aAxis;
