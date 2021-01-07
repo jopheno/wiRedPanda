@@ -22,11 +22,10 @@ AUTH_METHOD toAuthMethod(QString auth_type);
 struct RemoteLabOption {
   std::string name;
   std::string url;
-  std::string logo;
   AUTH_METHOD authMethod;
 
   RemoteLabOption() = default;
-  RemoteLabOption(std::string name, std::string url, std::string logo, AUTH_METHOD auth_method) : name(name), url(url), logo(logo), authMethod(auth_method) {}
+  RemoteLabOption(std::string name, std::string url, AUTH_METHOD auth_method) : name(name), url(url), authMethod(auth_method) {}
 
   std::string getName() const { return name; }
   std::string getUrl() const {
@@ -37,7 +36,6 @@ struct RemoteLabOption {
 
       return url.toStdString();
   }
-  std::string getLogo() const { return logo; }
   AUTH_METHOD getAuthMethod() const { return authMethod; }
 };
 
@@ -49,14 +47,14 @@ enum PIN_TYPE : uint8_t {
 };
 
 struct Pin {
-  uint8_t id;
+  uint32_t id;
   std::string name;
   PIN_TYPE type;
 
   Pin() = delete;
-  Pin(uint8_t id, const std::string& name, PIN_TYPE type) : id(id), name(name), type(type) {}
+  Pin(uint32_t id, const std::string& name, PIN_TYPE type) : id(id), name(name), type(type) {}
 
-  uint8_t getId() const { return id; }
+  uint32_t getId() const { return id; }
   const std::string& getName() const { return name; }
   PIN_TYPE getType() const { return type; }
 
@@ -67,13 +65,17 @@ class Fpga : public GraphicElement {
   bool lastClk;
   bool lastValue;
   uint16_t deviceId;
-  uint32_t latency;
+  uint16_t latency;
   std::string authToken;
+  std::string deviceMethod;
   std::string deviceAuth;
 
   std::list<RemoteLabOption> options;
   std::list<Pin> availablePins;
   std::list<Pin> mappedPins;
+
+  std::map<uint32_t, bool> mappedInputs;
+  std::map<uint32_t, bool> mappedOutputs;
 
   RemoteLabOption currentOption;
   QTcpSocket socket;
@@ -82,12 +84,21 @@ public:
   explicit Fpga( QGraphicsItem *parent = nullptr );
   virtual ~Fpga( ) override;
 
+  void setupPorts( );
+
   bool connectTo(const std::string& host, int port, const std::string& token, uint8_t deviceTypeId);
   void sendPing();
+  void sendIOInfo();
+  void sendUpdateInput(uint32_t id, uint8_t value);
 
   const std::string& getAuthToken() const { return authToken; }
   void setAuthToken(const std::string& token) {
       authToken = token;
+  }
+
+  const std::string& getDeviceMethod() const { return deviceMethod; }
+  void setDeviceMethod(const std::string& method) {
+      deviceMethod = method;
   }
 
   const std::string& getDeviceAuth() const { return deviceAuth; }
@@ -100,8 +111,8 @@ public:
       deviceId = id;
   }
 
-  uint32_t getLatency() const { return latency; }
-  void setLatency(uint32_t milliseconds) {
+  uint16_t getLatency() const { return latency; }
+  void setLatency(uint16_t milliseconds) {
       latency = milliseconds;
   }
 
@@ -111,11 +122,11 @@ public:
   }
 
   const std::list<Pin>& getAvailablePins() const { return availablePins; }
-  void addPin(uint8_t id, const std::string& port, uint8_t pinType) {
+  void addPin(uint32_t id, const std::string& port, uint8_t pinType) {
       availablePins.push_back(Pin(id, port, static_cast<PIN_TYPE>(pinType)));
   }
 
-  void resetPortMapping() { mappedPins.clear(); }
+  void resetPortMapping() { mappedPins.clear(); mappedOutputs.clear(); }
   const std::list<Pin>& getMappedPins() const { return mappedPins; }
   bool mapPin(const std::string& name, uint8_t pinType) {
       const std::list<Pin>& list = getAvailablePins();
@@ -127,6 +138,10 @@ public:
           if (p.getName().compare(name) == 0) {
               if (static_cast<int>(p.getType()) == PIN_GENERAL_PURPOSE || static_cast<int>(p.getType()) == static_cast<int>(pinType)) {
                   mappedPins.push_back(Pin(p.id, name, static_cast<PIN_TYPE>(pinType)));
+
+                  if (pinType == PIN_TYPE::PIN_INPUT) { mappedInputs[p.id] = false; }
+                  if (pinType == PIN_TYPE::PIN_OUTPUT) { mappedOutputs[p.id] = false; }
+
                   return true;
               } else {
                   return false;
@@ -136,6 +151,17 @@ public:
 
       return false;
   }
+
+  const std::map<uint32_t, bool>& getInputs() { return mappedInputs; }
+  void setInput(uint32_t id, bool value) {
+      if (mappedInputs[id] != value) {
+          mappedInputs[id] = value;
+          sendUpdateInput(id, value == true ? 1 : 0);
+      }
+  }
+
+  const std::map<uint32_t, bool>& getOutputs() { return mappedOutputs; }
+  void setOutput(uint32_t id, bool value) { mappedOutputs[id] = value; }
 
 private slots:
     void handle(qint64 bytes);

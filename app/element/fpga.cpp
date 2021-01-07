@@ -33,15 +33,14 @@ PIN_TYPE Pin::convertTypeString(const std::string& typeName) {
     return t;
 }
 
-Fpga::Fpga( QGraphicsItem *parent ) : GraphicElement( 1, 55, 1, 55, parent ) {
+Fpga::Fpga( QGraphicsItem *parent ) : GraphicElement( 0, 55, 0, 55, parent ) {
   pixmapSkinName.append( ":/remote/fpgaBox.png" );
   setPixmap( pixmapSkinName[ 0 ] );
   setRotatable( false );
+  setupPorts( );
   updatePorts( );
   setPortName( "FPGA" );
   setHasCustomConfig(true);
-  input( 0 )->setName( "Enable" );
-  output( 0 )->setName( "On/Off" );
   lastValue = false;
   lastClk = false;
   deviceId = 0;
@@ -105,27 +104,40 @@ bool Fpga::connectTo(const std::string& host, int port, const std::string& token
 void Fpga::sendPing() {
     NetworkOutgoingMessage msg = RemoteProtocol::sendPing();
     socket.write(msg);
-    socket.waitForReadyRead(5000);
+    socket.waitForReadyRead(1000);
+}
+
+void Fpga::sendIOInfo() {
+    NetworkOutgoingMessage msg = RemoteProtocol::sendIOInfo(latency, getMappedPins());
+    socket.write(msg);
+    socket.waitForReadyRead(1000);
+}
+
+void Fpga::sendUpdateInput(uint32_t id, uint8_t value) {
+    NetworkOutgoingMessage msg = RemoteProtocol::sendUpdateInput(id, value);
+    socket.write(msg);
 }
 
 void Fpga::readIsDone()
 {
-    QByteArray headerBytes = socket.read(4);
+    while(socket.bytesAvailable() > 0) {
+        QByteArray headerBytes = socket.read(4);
 
-    QDataStream hds(headerBytes);
-    uint32_t size;
-    hds >> size;
+        QDataStream hds(headerBytes);
+        uint32_t size;
+        hds >> size;
 
-    QByteArray opcodeBytes = socket.read(1);
-    QDataStream op_ds(opcodeBytes);
+        QByteArray opcodeBytes = socket.read(1);
+        QDataStream op_ds(opcodeBytes);
 
-    uint8_t opcode;
-    op_ds >> opcode;
+        uint8_t opcode;
+        op_ds >> opcode;
 
-    QByteArray bytes = socket.read(size-1);
-    QDataStream ds(bytes);
+        QByteArray bytes = socket.read(size-1);
+        QDataStream ds(bytes);
 
-    RemoteProtocol::parse(this, opcode, bytes);
+        RemoteProtocol::parse(this, opcode, bytes);
+    }
 }
 void Fpga::handle(qint64 bytesAmount)
 {
@@ -136,10 +148,47 @@ void Fpga::close()
     COMMENT( "Closing connection!", 0 );
 }
 
+void Fpga::setupPorts( ) {
+    int inputAmount = 0;
+    int outputAmount = 0;
+
+    const std::list<Pin>& mappedPins = getMappedPins();
+
+    if (mappedPins.size() <= 0) {
+        setInputSize(0);
+        setOutputSize(0);
+        return;
+    }
+
+
+    for (const Pin& p : mappedPins) {
+      if (p.getType() == PIN_TYPE::PIN_INPUT)
+          inputAmount++;
+      if (p.getType() == PIN_TYPE::PIN_OUTPUT)
+          outputAmount++;
+    }
+
+    setInputSize(inputAmount);
+    setOutputSize(outputAmount);
+
+    inputAmount = 0;
+    outputAmount = 0;
+    for (const Pin& p : mappedPins) {
+      if (p.getType() == PIN_TYPE::PIN_INPUT) {
+        input(inputAmount)->setName(QString::fromStdString(p.getName()));
+        input(inputAmount)->setRemoteId(p.getId());
+        inputAmount++;
+      }
+      if (p.getType() == PIN_TYPE::PIN_OUTPUT) {
+        output(outputAmount)->setName(QString::fromStdString(p.getName()));
+        output(outputAmount)->setRemoteId(p.getId());
+        outputAmount++;
+      }
+    }
+}
+
 void Fpga::updatePorts( ) {
   GraphicElement::updatePorts();
-  //input( 0 )->setPos( topPosition( ), 13 ); /* Data */
-  //output( 0 )->setPos( bottomPosition( ), 15 ); /* Q */
 }
 
 void Fpga::setSkin( bool defaultSkin, QString filename ) {
@@ -183,7 +232,6 @@ bool Fpga::loadSettings(const QDomDocument& xml) {
         {
             // Read Name and value
             if (component.tagName()=="url") option.url=component.firstChild().toText().data().toStdString();
-            if (component.tagName()=="logo") option.logo=component.firstChild().toText().data().toStdString();
             if (component.tagName()=="auth") option.authMethod=toAuthMethod(component.firstChild().toText().data().toStdString());
 
             // Next child component

@@ -55,6 +55,7 @@ QNEPort::QNEPort( QGraphicsItem *parent ) : QGraphicsPathItem( parent ) {
   m_graphicElement = nullptr;
   m_required = true;
   m_defaultValue = -1;
+  m_remoteId = 0;
 }
 
 void QNEPort::setNEBlock( QNEBlock *b ) {

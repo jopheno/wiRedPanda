@@ -9,6 +9,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QAbstractButton>
+#include <QLocalSocket>
 
 namespace Ui {
   class FpgaConfig;

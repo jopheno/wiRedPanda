@@ -151,6 +151,9 @@ bool FpgaConfig::savePortMapping() {
 
     }
 
+    elm->sendIOInfo();
+    elm->setupPorts();
+
     return true;
 }
 
@@ -283,6 +286,31 @@ void FpgaConfig::setupConfigScreen() {
         QNetworkReply* reply = manager->post(request, postData);
         reply->setProperty("type", "image");
         reply->setProperty("req", "setMethod");
+    }
+
+    if (elm->getDeviceMethod() == "VirtualHere") {
+        #ifdef _WIN32
+        // start virtualhere
+        {
+            QStringList args;
+            QProcess* process = new QProcess();
+            process->setWorkingDirectory(QDir::currentPath());
+
+            args << "-cvhui.ini";
+            process->start("vhui32.exe", args);
+        }
+        #endif
+        #ifdef _WIN64
+        // start virtualhere
+        {
+            QStringList args;
+            QProcess* process = new QProcess();
+            process->setWorkingDirectory(QDir::currentPath());
+
+            args << "-cvhui.ini";
+            process->start("vhui64.exe", args);
+        }
+        #endif
     }
 }
 
