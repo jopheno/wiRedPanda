@@ -28,7 +28,6 @@ ElementEditor::ElementEditor( QWidget *parent ) : QWidget( parent ), ui( new Ui:
   ui->lineEditTrigger->installEventFilter( this );
   ui->comboBoxColor->installEventFilter( this );
   ui->comboBoxInputSz->installEventFilter( this );
-  ui->comboBoxOutputSz->installEventFilter( this );
   ui->doubleSpinBoxFrequency->installEventFilter( this );
   ui->comboBoxAudio->installEventFilter( this );
 }
@@ -156,7 +155,7 @@ void ElementEditor::contextMenu( QPoint screenPos ) {
 
   if ( hasCustomConfig ) {
     QAction *remoteConfigAction = menu.addAction( remoteConfigMenuText );
-    connect( remoteConfigAction, &QAction::triggered, editor, &Editor::customAction );
+    connect( remoteConfigAction, &QAction::triggered, editor, &Editor::openConfigAction );
   }
 
   menu.addSeparator( );
@@ -246,12 +245,12 @@ void ElementEditor::retranslateUi( ) {
 
 void ElementEditor::setCurrentElements( const QVector< GraphicElement* > &elms ) {
   m_elements = elms;
-  hasLabel = hasColors = hasFrequency = canChangeInputSize = canChangeOutputSize = hasTrigger = hasAudio = false;
+  hasLabel = hasColors = hasFrequency = canChangeInputSize = hasTrigger = hasAudio = false;
   hasRotation = hasSameLabel = hasSameColors = hasSameFrequency = hasSameAudio = false;
   hasSameInputSize = hasSameOutputSize = hasSameTrigger = canMorph = hasSameType = false;
   hasElements = false;
   if( !elms.isEmpty( ) ) {
-    hasLabel = hasColors = hasAudio = hasFrequency = canChangeInputSize = canChangeOutputSize = hasTrigger = true;
+    hasLabel = hasColors = hasAudio = hasFrequency = canChangeInputSize = hasTrigger = true;
     hasRotation = canChangeSkin =  true;
     setVisible( true );
     setEnabled( false );
@@ -294,9 +293,9 @@ void ElementEditor::setCurrentElements( const QVector< GraphicElement* > &elms )
       sameElementGroup |=
         ( elm->elementGroup( ) == ElementGroup::STATICINPUT && firstElement->elementGroup( ) == ElementGroup::INPUT );
       canMorph &= sameElementGroup;
+
+      canChangeInputSize = ( minimum < maximum && elm->elementType() != ElementType::REMOTE );
     }
-    canChangeInputSize = ( minimum < maximum );
-    canChangeOutputSize = ( minimum < maximum );
 
     /* Labels */
     ui->lineEditElementLabel->setVisible( hasLabel );
@@ -379,27 +378,6 @@ void ElementEditor::setCurrentElements( const QVector< GraphicElement* > &elms )
         ui->comboBoxInputSz->setCurrentText( _manyIS );
       }
     }
-    /* Output size */
-    ui->comboBoxOutputSz->clear( );
-    ui->label_inputs->setVisible( canChangeOutputSize );
-    ui->comboBoxOutputSz->setVisible( canChangeOutputSize );
-    ui->comboBoxOutputSz->setEnabled( canChangeOutputSize );
-    for( int port = minimum; port <= maximum; ++port ) {
-      ui->comboBoxOutputSz->addItem( QString::number( port ), port );
-    }
-    if( ui->comboBoxOutputSz->findText( _manyIS ) == -1 ) {
-      ui->comboBoxOutputSz->addItem( _manyIS );
-    }
-    if( canChangeOutputSize ) {
-      if( hasSameOutputSize ) {
-        QString outputSz = QString::number( firstElement->outputSize( ) );
-        ui->comboBoxOutputSz->removeItem( ui->comboBoxOutputSz->findText( _manyIS ) );
-        ui->comboBoxOutputSz->setCurrentText( outputSz );
-      }
-      else {
-        ui->comboBoxOutputSz->setCurrentText( _manyIS );
-      }
-    }
     /* Trigger */
     ui->lineEditTrigger->setVisible( hasTrigger );
     ui->lineEditTrigger->setEnabled( hasTrigger );
@@ -412,6 +390,9 @@ void ElementEditor::setCurrentElements( const QVector< GraphicElement* > &elms )
         ui->lineEditTrigger->setText( _manyTriggers );
       }
     }
+    /* Remote Device Configuration */
+    ui->label_removeDevice->setVisible( hasCustomConfig );
+    ui->pushButtonRemoteDeviceConfig->setVisible( hasCustomConfig );
     setEnabled( true );
     setVisible( true );
   }
@@ -471,15 +452,6 @@ void ElementEditor::on_comboBoxInputSz_currentIndexChanged( int ) {
   }
   if( canChangeInputSize && ( ui->comboBoxInputSz->currentText( ) != _manyIS ) ) {
     emit sendCommand( new ChangeInputSZCommand( m_elements, ui->comboBoxInputSz->currentData( ).toInt( ), editor ) );
-  }
-}
-
-void ElementEditor::on_comboBoxOutputSz_currentIndexChanged( int ) {
-  if( ( m_elements.isEmpty( ) ) || ( isEnabled( ) == false ) ) {
-    return;
-  }
-  if( canChangeOutputSize && ( ui->comboBoxOutputSz->currentText( ) != _manyIS ) ) {
-    emit sendCommand( new ChangeOutputSZCommand( m_elements, ui->comboBoxOutputSz->currentData().toInt(), editor) );
   }
 }
 
@@ -561,4 +533,9 @@ void ElementEditor::on_pushButtonChangeSkin_clicked( ) {
 void ElementEditor::on_pushButtonDefaultSkin_clicked( ) {
   m_defaultSkin = true;
   apply( );
+}
+
+void ElementEditor::on_pushButtonRemoteDeviceConfig_clicked()
+{
+    editor->openConfigAction();
 }

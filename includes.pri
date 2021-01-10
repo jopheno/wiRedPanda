@@ -58,6 +58,7 @@ SOURCES += \
     $$PWD/app/nodes/qneconnection.cpp \
     $$PWD/app/nodes/qneport.cpp \
     $$PWD/app/recentfilescontroller.cpp \
+    $$PWD/app/remotedeviceconfig.cpp \
     $$PWD/app/scene.cpp \
     $$PWD/app/serializationfunctions.cpp \
     $$PWD/app/simulationcontroller.cpp \
@@ -72,7 +73,6 @@ SOURCES += \
     $$PWD/app/elementmapping.cpp \
     $$PWD/app/boxmapping.cpp \
     $$PWD/app/common.cpp \
-    $$PWD/app/fpgaconfig.cpp \
     $$PWD/app/protocol.cpp
 
 HEADERS  +=  \
@@ -94,6 +94,7 @@ HEADERS  +=  \
     $$PWD/app/nodes/qneconnection.h \
     $$PWD/app/nodes/qneport.h \
     $$PWD/app/recentfilescontroller.h \
+    $$PWD/app/remotedeviceconfig.h \
     $$PWD/app/scene.h \
     $$PWD/app/serializationfunctions.h \
     $$PWD/app/simulationcontroller.h \
@@ -107,7 +108,6 @@ HEADERS  +=  \
     $$PWD/app/boxprototypeimpl.h \
     $$PWD/app/elementmapping.h \
     $$PWD/app/boxmapping.h \
-    $$PWD/app/fpgaconfig.h \
     $$PWD/app/network.h \
     $$PWD/app/protocol.h
 
@@ -119,8 +119,8 @@ INCLUDEPATH += \
 FORMS    += \
     $$PWD/app/mainwindow.ui \
     $$PWD/app/elementeditor.ui \
-    $$PWD/app/simplewaveform.ui \
-    $$PWD/app/fpgaconfig.ui
+    $$PWD/app/remotedeviceconfig.ui \
+    $$PWD/app/simplewaveform.ui
 
 RESOURCES += \
     $$PWD/app/resources/resources.qrc\

@@ -19,13 +19,13 @@ SOURCES += \
     $$PWD/nor.cpp \
     $$PWD/not.cpp \
     $$PWD/or.cpp \
+    $$PWD/remotedevice.cpp \
     $$PWD/srflipflop.cpp \
     $$PWD/tflipflop.cpp \
 #    $$PWD/tlatch.cpp \
     $$PWD/xnor.cpp \
     $$PWD/xor.cpp \
-    $$PWD/buzzer.cpp \
-    $$PWD/fpga.cpp
+    $$PWD/buzzer.cpp
 
 HEADERS  +=  \
     $$PWD/and.h \
@@ -49,10 +49,10 @@ HEADERS  +=  \
     $$PWD/nor.h \
     $$PWD/not.h \
     $$PWD/or.h \
+    $$PWD/remotedevice.h \
     $$PWD/srflipflop.h \
     $$PWD/tflipflop.h \
 #    $$PWD/tlatch.h \
     $$PWD/xnor.h \
     $$PWD/xor.h \
-    $$PWD/buzzer.h \
-    $$PWD/fpga.h
+    $$PWD/buzzer.h

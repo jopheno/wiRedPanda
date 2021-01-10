@@ -26,7 +26,7 @@
 #include "elementfactory.h"
 #include "element/mux.h"
 #include "element/node.h"
-#include "element/fpga.h"
+#include "element/remotedevice.h"
 #include "qneconnection.h"
 
 #include <QDebug>
@@ -67,7 +67,7 @@ ElementType ElementFactory::textToType( QString text ) {
          text == "DEMUX" ? ElementType::DEMUX :
          text == "NODE" ? ElementType::NODE :
          text == "BUZZER" ? ElementType::BUZZER :
-         text == "FPGA" ? ElementType::FPGA :
+         text == "REMOTE" ? ElementType::REMOTE :
          ElementType::UNKNOWN;
   return( type );
 }
@@ -101,7 +101,7 @@ QString ElementFactory::typeToText( ElementType type ) {
       case ElementType::DEMUX: return( "DEMUX" );
       case ElementType::NODE: return( "NODE" );
       case ElementType::BUZZER: return( "BUZZER" );
-      case ElementType::FPGA: return( "FPGA" );
+      case ElementType::REMOTE: return( "REMOTE" );
       case ElementType::UNKNOWN: default: return( "UNKNOWN" );
   }
 }
@@ -135,7 +135,7 @@ QString ElementFactory::translatedName( ElementType type ) {
       case ElementType::DEMUX: return( tr( "Demux" ) );
       case ElementType::NODE: return( tr( "Node" ) );
       case ElementType::BUZZER: return( tr( "Buzzer" ) );
-      case ElementType::FPGA: return( tr( "FPGA" ) );
+      case ElementType::REMOTE: return( tr( "Remote" ) );
       case ElementType::UNKNOWN: default: return( tr( "Unknown" ) );
   }
 }
@@ -169,7 +169,7 @@ QPixmap ElementFactory::getPixmap( ElementType type ) {
       case ElementType::DEMUX: return( QPixmap( ":/basic/demux.png" ) );
       case ElementType::NODE: return( QPixmap( ":/basic/node.png" ) );
       case ElementType::BUZZER: return( QPixmap( ":/output/BuzzerOff.png" ) );
-      case ElementType::FPGA: return( QPixmap( ":/remote/fpgaBox.png" ) );
+      case ElementType::REMOTE: return( QPixmap( ":/remote/fpgaBox.png" ) );
       case ElementType::UNKNOWN: return( QPixmap( ) );
   }
   return( QPixmap( ) );
@@ -208,7 +208,7 @@ GraphicElement* ElementFactory::buildElement( ElementType type, QGraphicsItem *p
         type == ElementType::MUX ? new Mux( parent ) :
         type == ElementType::DEMUX ? new Demux( parent ) :
         type == ElementType::BUZZER ? new Buzzer( parent ) :
-        type == ElementType::FPGA ? new Fpga( parent ) :
+        type == ElementType::REMOTE ? new RemoteDevice( parent ) :
         static_cast< GraphicElement* >( nullptr );
   return( elm );
 }

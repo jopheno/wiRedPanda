@@ -6,6 +6,7 @@ HEADERS += \
     $$PWD/logicor.h \
     $$PWD/logicnand.h \
     $$PWD/logicnor.h \
+    $$PWD/logicremotedevice.h \
     $$PWD/logicxor.h \
     $$PWD/logicxnor.h \
     $$PWD/logicnot.h \
@@ -15,8 +16,7 @@ HEADERS += \
     $$PWD/logicdflipflop.h \
     $$PWD/logicdlatch.h \
     $$PWD/logicmux.h \
-    $$PWD/logicdemux.h \
-    $$PWD/logicfpga.h
+    $$PWD/logicdemux.h
 
 SOURCES += \
     $$PWD/logicnode.cpp \
@@ -26,6 +26,7 @@ SOURCES += \
     $$PWD/logicor.cpp \
     $$PWD/logicnand.cpp \
     $$PWD/logicnor.cpp \
+    $$PWD/logicremotedevice.cpp \
     $$PWD/logicxor.cpp \
     $$PWD/logicxnor.cpp \
     $$PWD/logicnot.cpp \
@@ -35,5 +36,4 @@ SOURCES += \
     $$PWD/logicdflipflop.cpp \
     $$PWD/logicdlatch.cpp \
     $$PWD/logicmux.cpp \
-    $$PWD/logicdemux.cpp \
-    $$PWD/logicfpga.cpp
+    $$PWD/logicdemux.cpp

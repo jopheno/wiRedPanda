@@ -46,7 +46,6 @@ private slots:
   void on_lineEditElementLabel_editingFinished( );
 
   void on_comboBoxInputSz_currentIndexChanged( int index );
-  void on_comboBoxOutputSz_currentIndexChanged( int index );
 
   void on_doubleSpinBoxFrequency_editingFinished( );
 
@@ -65,6 +64,8 @@ private slots:
 
   void on_pushButtonDefaultSkin_clicked();
 
+  void on_pushButtonRemoteDeviceConfig_clicked();
+
 private:
   void setCurrentElements( const QVector< GraphicElement* > &element );
   void apply( );
@@ -74,7 +75,7 @@ private:
   Scene *scene;
   Editor *editor;
   bool hasAnyProperty, hasLabel, hasColors, hasFrequency, hasAudio, hasCustomConfig;
-  bool canChangeInputSize, canChangeOutputSize, hasTrigger, hasRotation, canChangeSkin;
+  bool canChangeInputSize, hasTrigger, hasRotation, canChangeSkin;
   bool hasSameLabel, hasSameColors, hasSameFrequency;
   bool hasSameInputSize, hasSameOutputSize, hasSameTrigger, canMorph, hasSameType;
   bool hasSameAudio;

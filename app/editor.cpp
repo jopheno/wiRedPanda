@@ -10,7 +10,7 @@
 #include "nodes/qneconnection.h"
 #include "serializationfunctions.h"
 #include "thememanager.h"
-#include "fpgaconfig.h"
+#include "remotedeviceconfig.h"
 
 #include <iostream>
 #include <QApplication>
@@ -833,10 +833,10 @@ void Editor::receiveCommand( QUndoCommand *cmd ) {
   undoStack->push( cmd );
 }
 
-void Editor::customAction( ) {
+void Editor::openConfigAction( ) {
   QVector< GraphicElement* > elms = scene->selectedElements( );
   if( elms.size() == 1 ) {
-      FpgaConfig fc( this, mainWindow, elms.first() );
+      RemoteDeviceConfig fc( this, mainWindow, elms.first() );
       fc.start( );
   } else {
       QMessageBox::warning( mainWindow, tr( "ERROR" ), "Unable to trigger configure for more than a remote element at once", QMessageBox::Ok );
@@ -990,6 +990,10 @@ bool Editor::eventFilter( QObject *obj, QEvent *evt ) {
           }
           evt->accept( );
           return( true );
+        }
+        RemoteDevice *remoteDevice = dynamic_cast< RemoteDevice* >( itemAt( mousePos ) );
+        if (remoteDevice) {
+            openConfigAction();
         }
         break;
       }

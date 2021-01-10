@@ -5,10 +5,10 @@
 
 #include <map>
 
-#include "fpga.h"
+#include "remotedevice.h"
 #include "network.h"
 
-typedef void (*parse_function)(Fpga*, NetworkIncomingMessage&);
+typedef void (*parse_function)(RemoteDevice*, NetworkIncomingMessage&);
 
 enum Opcodes : uint8_t {
     OPCODE_NONE = 0,
@@ -20,11 +20,11 @@ enum Opcodes : uint8_t {
 class RemoteProtocol {
 public:
     static void init();
-    static void parse(Fpga* fpga, uint8_t opcode, QByteArray ds);
+    static void parse(RemoteDevice* remoteDevice, uint8_t opcode, QByteArray ds);
 
-    static void parse_session_start(Fpga* fpga, NetworkIncomingMessage& imsg);
-    static void parse_pong(Fpga* fpga, NetworkIncomingMessage& imsg);
-    static void parse_output(Fpga* fpga, NetworkIncomingMessage& imsg);
+    static void parse_session_start(RemoteDevice* remoteDevice, NetworkIncomingMessage& imsg);
+    static void parse_pong(RemoteDevice* remoteDevice, NetworkIncomingMessage& imsg);
+    static void parse_output(RemoteDevice* remoteDevice, NetworkIncomingMessage& imsg);
 
     static NetworkOutgoingMessage sendPing();
     static NetworkOutgoingMessage sendIOInfo(uint16_t latency, const std::list<Pin>& mappedPins);

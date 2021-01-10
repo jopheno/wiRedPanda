@@ -52,6 +52,7 @@ GraphicElement::GraphicElement( int minInputSz, int maxInputSz, int minOutputSz,
   m_hasAudio = false;
   m_disabled = false;
   m_outputsOnTop = true;
+  m_hasCustomConfig = false;
 
   COMMENT( "Including input and output ports.", 4 );
   for( int i = 0; i < minInputSz; i++ ) {

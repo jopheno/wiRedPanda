@@ -1,4 +1,4 @@
-#include "fpga.h"
+#include "remotedevice.h"
 #include "protocol.h"
 
 AUTH_METHOD toAuthMethod(std::string auth_type) {
@@ -33,19 +33,21 @@ PIN_TYPE Pin::convertTypeString(const std::string& typeName) {
     return t;
 }
 
-Fpga::Fpga( QGraphicsItem *parent ) : GraphicElement( 0, 55, 0, 55, parent ) {
+std::list<RemoteLabOption> RemoteDevice::options;
+
+RemoteDevice::RemoteDevice( QGraphicsItem *parent ) : GraphicElement( 0, 55, 0, 55, parent ) {
   pixmapSkinName.append( ":/remote/fpgaBox.png" );
   setPixmap( pixmapSkinName[ 0 ] );
   setRotatable( false );
   setupPorts( );
   updatePorts( );
-  setPortName( "FPGA" );
+  setPortName( "RemoteDevice" );
   setHasCustomConfig(true);
   lastValue = false;
   lastClk = false;
   deviceId = 0;
   authToken = "";
-  deviceAuth = "";
+  deviceAuth = {"", ""};
 
   // Try loading remote lab settings
   QDomDocument xml;
@@ -71,23 +73,34 @@ Fpga::Fpga( QGraphicsItem *parent ) : GraphicElement( 0, 55, 0, 55, parent ) {
   }
 
   socket.setSocketOption(QAbstractSocket::KeepAliveOption, 1);
-  connect(&socket, &QTcpSocket::bytesWritten, this, &Fpga::handle);
-  connect(&socket, &QTcpSocket::disconnected, this, &Fpga::close);
-  connect(&socket, &QTcpSocket::readyRead, this, &Fpga::readIsDone);
+  // No need for checking the amount of bytes written
+  //connect(&socket, &QTcpSocket::bytesWritten, this, &RemoteDevice::handle);
+  connect(&socket, &QTcpSocket::disconnected, this, &RemoteDevice::close);
+  connect(&socket, &QTcpSocket::readyRead, this, &RemoteDevice::readIsDone);
+
+  connect(&this->timer, &QTimer::timeout, this, &RemoteDevice::onTimeRefresh);
+  this->timer.start(1000);
 }
 
-Fpga::~Fpga() {
+RemoteDevice::~RemoteDevice() {
+    timer.stop();
+
     if(socket.isOpen())
         socket.disconnectFromHost();
 }
 
-bool Fpga::connectTo(const std::string& host, int port, const std::string& token, uint8_t deviceTypeId) {
+void RemoteDevice::onTimeRefresh() {
+    if(socket.isOpen())
+        sendPing();
+}
+
+bool RemoteDevice::connectTo(const std::string& host, int port, const std::string& token, uint8_t deviceTypeId, uint8_t methodId) {
     COMMENT( "Connecting to " + host, 0 );
-    qDebug() << deviceTypeId;
     socket.connectToHost(QString::fromStdString(host), port);
     if (socket.waitForConnected(5000)) {
         NetworkOutgoingMessage msg(1);
         msg.addByte<uint8_t>(deviceTypeId);
+        msg.addByte<uint8_t>(methodId);
         msg.addString(QString::fromStdString(token));
         msg.addSize();
 
@@ -101,24 +114,24 @@ bool Fpga::connectTo(const std::string& host, int port, const std::string& token
     return false;
 }
 
-void Fpga::sendPing() {
+void RemoteDevice::sendPing() {
     NetworkOutgoingMessage msg = RemoteProtocol::sendPing();
     socket.write(msg);
     socket.waitForReadyRead(1000);
 }
 
-void Fpga::sendIOInfo() {
+void RemoteDevice::sendIOInfo() {
     NetworkOutgoingMessage msg = RemoteProtocol::sendIOInfo(latency, getMappedPins());
     socket.write(msg);
     socket.waitForReadyRead(1000);
 }
 
-void Fpga::sendUpdateInput(uint32_t id, uint8_t value) {
+void RemoteDevice::sendUpdateInput(uint32_t id, uint8_t value) {
     NetworkOutgoingMessage msg = RemoteProtocol::sendUpdateInput(id, value);
     socket.write(msg);
 }
 
-void Fpga::readIsDone()
+void RemoteDevice::readIsDone()
 {
     while(socket.bytesAvailable() > 0) {
         QByteArray headerBytes = socket.read(4);
@@ -139,16 +152,13 @@ void Fpga::readIsDone()
         RemoteProtocol::parse(this, opcode, bytes);
     }
 }
-void Fpga::handle(qint64 bytesAmount)
-{
-    std::cerr << "bytesAmount: " << bytesAmount << std::endl;
-}
-void Fpga::close()
+
+void RemoteDevice::close()
 {
     COMMENT( "Closing connection!", 0 );
 }
 
-void Fpga::setupPorts( ) {
+void RemoteDevice::setupPorts( ) {
     int inputAmount = 0;
     int outputAmount = 0;
 
@@ -187,19 +197,19 @@ void Fpga::setupPorts( ) {
     }
 }
 
-void Fpga::updatePorts( ) {
+void RemoteDevice::updatePorts( ) {
   GraphicElement::updatePorts();
 }
 
-void Fpga::setSkin( bool defaultSkin, QString filename ) {
+void RemoteDevice::setSkin( bool defaultSkin, QString filename ) {
   if( defaultSkin )
-    pixmapSkinName[ 0 ] = ":/remote/fpgaBox.png";
+    pixmapSkinName[ 0 ] = ":/remote/RemoteDeviceBox.png";
   else
     pixmapSkinName[ 0 ] = filename;
   setPixmap( pixmapSkinName[ 0 ] );
 }
 
-bool Fpga::loadSettings(const QDomDocument& xml) {
+bool RemoteDevice::loadSettings(const QDomDocument& xml) {
   // Extract the root markup
   QDomElement root=xml.documentElement();
 
@@ -247,4 +257,70 @@ bool Fpga::loadSettings(const QDomDocument& xml) {
   }
 
   return true;
+}
+
+void RemoteDevice::loadAvailablePin( QDataStream &ds ) {
+  quint32 portId;
+  ds >> portId;
+  QString portName;
+  ds >> portName;
+  quint8 portType;
+  ds >> portType;
+
+  addPin(portId, portName.toStdString(), portType);
+}
+
+void RemoteDevice::loadMappedPin( QDataStream &ds ) {
+  QString portName;
+  ds >> portName;
+  quint8 portType;
+  ds >> portType;
+
+  mapPin(portName.toStdString(), portType);
+}
+
+void RemoteDevice::loadRemoteIO( QDataStream &ds, double version ) {
+  if( version >= 2.7 ) {
+    COMMENT( "Loading remote IO.", 4 );
+
+    resetPortMapping();
+
+    quint32 availablePinsAmount;
+    ds >> availablePinsAmount;
+    for( size_t index = 0; index < availablePinsAmount; ++index ) {
+      loadAvailablePin( ds );
+    }
+
+    quint32 mappedPinsAmount;
+    ds >> mappedPinsAmount;
+    for( size_t index = 0; index < mappedPinsAmount; ++index ) {
+      loadMappedPin( ds );
+    }
+    refresh( );
+  }
+}
+
+void RemoteDevice::load( QDataStream &ds, QMap< quint64, QNEPort* > &portMap, double version ) {
+    GraphicElement::load(ds, portMap, version);
+
+    loadRemoteIO(ds, version);
+}
+
+void RemoteDevice::save( QDataStream &ds ) const {
+    GraphicElement::save( ds );
+
+    /* <\Version2.7> */
+    COMMENT( "Saving remote IO.", 4 );
+    ds << static_cast< quint32 >( availablePins.size( ) );
+    for( const Pin& pin: availablePins ) {
+      ds << static_cast<quint32>(pin.getId());
+      ds << QString::fromStdString(pin.getName());
+      ds << static_cast<quint8>(pin.getType());
+    }
+
+    ds << static_cast< quint32 >( mappedPins.size( ) );
+    for( const Pin& pin: mappedPins ) {
+      ds << QString::fromStdString(pin.getName());
+      ds << static_cast<quint8>(pin.getType());
+    }
 }

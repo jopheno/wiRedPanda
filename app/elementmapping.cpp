@@ -23,8 +23,8 @@
 #include "logicelement/logicxnor.h"
 #include "logicelement/logicxor.h"
 
-#include "fpga.h"
-#include "logicelement/logicfpga.h"
+#include "remotedevice.h"
+#include "logicelement/logicremotedevice.h"
 
 #include <QDebug>
 
@@ -166,10 +166,10 @@ LogicElement* ElementMapping::buildLogicElement( GraphicElement *elm ) {
       case ElementType::JKLATCH:
       //! TODO: TLATCH not yet implemented.
       return( new LogicDLatch( ) );
-      case ElementType::FPGA: {
-            Fpga* fpga;
-            if ((fpga = dynamic_cast<Fpga*>(elm)))
-                return( new LogicFpga( fpga ) );
+      case ElementType::REMOTE: {
+            RemoteDevice* remoteDevice;
+            if ((remoteDevice = dynamic_cast<RemoteDevice*>(elm)))
+                return( new LogicRemoteDevice( remoteDevice ) );
 
             throw std::runtime_error( "Unable to create an FPGA logic element: " + elm->objectName( ).toStdString( ) );
       }

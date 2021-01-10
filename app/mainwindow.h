@@ -18,6 +18,7 @@
 #include <QTemporaryFile>
 #include <QTranslator>
 #include <QUndoView>
+#include <QDomDocument>
 
 namespace Ui {
   class MainWindow;
@@ -56,6 +57,8 @@ public:
   void setFastMode( bool fastModeEnabled );
 
   void buildFullScreenDialog( );
+
+  QDomDocument* loadRemoteFunctions( );
 
   QDialog *fullscreenDlg;
   GraphicsView *fullscreenView;

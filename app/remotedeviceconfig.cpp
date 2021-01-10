@@ -1,5 +1,5 @@
-#include "fpgaconfig.h"
-#include "ui_fpgaconfig.h"
+#include "remotedeviceconfig.h"
+#include "ui_remotedeviceconfig.h"
 
 #include <QClipboard>
 #include <QSettings>
@@ -11,10 +11,10 @@
 #include <QMenu>
 #include <QAction>
 
-FpgaConfig::FpgaConfig( Editor *editor, QWidget *parent, GraphicElement *elm ) : QDialog( parent ), ui( new Ui::FpgaConfig ), editor( editor ), manager(new QNetworkAccessManager(this)) {
+RemoteDeviceConfig::RemoteDeviceConfig( Editor *editor, QWidget *parent, GraphicElement *elm ) : QDialog( parent ), ui( new Ui::RemoteDeviceConfig ), editor( editor ), manager(new QNetworkAccessManager(this)) {
   ui->setupUi( this );
 
-  setWindowTitle( "FPGA Configuration" );
+  setWindowTitle( "Remote Device" );
   setWindowFlags( Qt::Window );
   setModal( true );
   QSettings settings( QSettings::IniFormat, QSettings::UserScope,
@@ -25,13 +25,13 @@ FpgaConfig::FpgaConfig( Editor *editor, QWidget *parent, GraphicElement *elm ) :
   QPixmap unavailable( ":/remote/unavailable.png" );
   ui->logo->setPixmap(unavailable.scaled(ui->logo->width(), ui->logo->height(), Qt::KeepAspectRatio));
 
-  manager->setTransferTimeout(2000);
+  manager->setTransferTimeout(500);
 
   connect(manager, &QNetworkAccessManager::finished,
-          this, &FpgaConfig::connectionResponse);
+          this, &RemoteDeviceConfig::connectionResponse);
 
-  if (Fpga* fpga = dynamic_cast<Fpga*>(elm)) {
-    this->elm = fpga;
+  if (RemoteDevice* remoteDevice = dynamic_cast<RemoteDevice*>(elm)) {
+    this->elm = remoteDevice;
   }
 
   if (this->elm->getAuthToken() == "") {
@@ -41,12 +41,12 @@ FpgaConfig::FpgaConfig( Editor *editor, QWidget *parent, GraphicElement *elm ) :
   }
 }
 
-FpgaConfig::~FpgaConfig() {
+RemoteDeviceConfig::~RemoteDeviceConfig() {
     delete manager;
     delete ui;
 }
 
-void FpgaConfig::setupAuthScreen() {
+void RemoteDeviceConfig::setupAuthScreen() {
     for (auto option : this->elm->getOptions()) {
       ui->serviceSelector->addItem(QString::fromUtf8(option.getName().c_str()));
     }
@@ -59,7 +59,7 @@ void FpgaConfig::setupAuthScreen() {
     updateServiceInfo(currentSelected);
 }
 
-void FpgaConfig::onEditPortMapping(int row, int column) {
+void RemoteDeviceConfig::onEditPortMapping(int row, int column) {
     QStringList items;
 
     if (column == 0) {
@@ -92,27 +92,15 @@ void FpgaConfig::onEditPortMapping(int row, int column) {
     }
 }
 
-void FpgaConfig::onAddPin() {
+void RemoteDeviceConfig::onAddPin() {
     ui->tableWidget->insertRow(ui->tableWidget->currentRow()+1);
 }
 
-void FpgaConfig::onRemovePin() {
+void RemoteDeviceConfig::onRemovePin() {
     ui->tableWidget->removeRow(ui->tableWidget->currentRow());
 }
 
-void FpgaConfig::onImportPinList() {
-    QMessageBox messageBox;
-    messageBox.information(0,"Info","Not implemented yet!");
-    messageBox.setFixedSize(500,200);
-}
-
-void FpgaConfig::onExportPinList() {
-    QMessageBox messageBox;
-    messageBox.information(0,"Info","Not implemented yet!");
-    messageBox.setFixedSize(500,200);
-}
-
-bool FpgaConfig::savePortMapping() {
+bool RemoteDeviceConfig::savePortMapping() {
     elm->resetPortMapping();
 
     int rowsAmount = ui->tableWidget->rowCount();
@@ -157,17 +145,49 @@ bool FpgaConfig::savePortMapping() {
     return true;
 }
 
-void FpgaConfig::onTimeRefresh() {
+void RemoteDeviceConfig::onTimeRefresh() {
+    static uint16_t last_latency;
+
     QTime time = QTime::currentTime();
     QString text = time.toString("hh:mm");
     if ((time.second() % 2) == 0)
         text[2] = ' ';
     ui->timeRemaining->display(text);
 
+    QPalette sample_palette;
+    sample_palette.setColor(QPalette::Window, Qt::white);
+    if (elm->getLatency() <= 20) {
+        sample_palette.setColor(QPalette::WindowText, Qt::darkGreen);
+    } else if (elm->getLatency() > 20 && elm->getLatency() <= 50) {
+        sample_palette.setColor(QPalette::WindowText, Qt::darkYellow);
+    } else {
+        sample_palette.setColor(QPalette::WindowText, Qt::darkRed);
+    }
+
+    static bool warnedAlready = false;
+
+    if (!warnedAlready && elm->getLatency() > 120 && last_latency > 120) {
+        QMessageBox messageBox;
+        messageBox.critical(0,"Warning","Your connection latency is pretty bad, you will not be able to use the remote lab.");
+        messageBox.setFixedSize(500,200);
+        warnedAlready = true;
+    }
+
+    if (!warnedAlready && elm->getLatency() > 80 && last_latency > 80) {
+        QMessageBox messageBox;
+        messageBox.critical(0,"Warning","Looks like your connection is pretty unstable, you may not be able to use the remote lab.");
+        messageBox.setFixedSize(500,200);
+        warnedAlready = true;
+    }
+
+    last_latency = elm->getLatency();
+
+    ui->ping->setAutoFillBackground(true);
+    ui->ping->setPalette(sample_palette);
     ui->ping->setText("Ping: " + QString::number(elm->getLatency()) + "ms");
 }
 
-void FpgaConfig::setupConfigScreen() {
+void RemoteDeviceConfig::setupConfigScreen() {
     ui->stackedWidget->setCurrentIndex(1);
     QString url = QString::fromStdString(this->elm->getCurrentOption().getUrl());
 
@@ -175,48 +195,54 @@ void FpgaConfig::setupConfigScreen() {
     COMMENT(url.toStdString(), 0);
 
     // Connect buttons
-    connect(ui->buttonBox, &QDialogButtonBox::clicked, this, &FpgaConfig::onApplyConfig);
-    connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &FpgaConfig::onRejectConfig);
+    connect(ui->buttonBox, &QDialogButtonBox::clicked, this, &RemoteDeviceConfig::onApplyConfig);
+    connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &RemoteDeviceConfig::onRejectConfig);
 
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     QAction* addAction = new QAction("Add", this);
     QAction* removeAction = new QAction("Remove", this);
-    QAction* importAction = new QAction("Import", this);
-    QAction* exportAction = new QAction("Export", this);
 
-    connect(addAction, &QAction::triggered, this, &FpgaConfig::onAddPin);
-    connect(removeAction, &QAction::triggered, this, &FpgaConfig::onRemovePin);
-    connect(importAction, &QAction::triggered, this, &FpgaConfig::onImportPinList);
-    connect(exportAction, &QAction::triggered, this, &FpgaConfig::onExportPinList);
+    QAction* copyAction = new QAction("Copy", this);
+
+    connect(addAction, &QAction::triggered, this, &RemoteDeviceConfig::onAddPin);
+    connect(removeAction, &QAction::triggered, this, &RemoteDeviceConfig::onRemovePin);
+
+    connect(copyAction, &QAction::triggered, this, &RemoteDeviceConfig::onCopyToClipboard);
 
     addAction->setIcon(QIcon(":/toolbar/zoomIn.png"));
     removeAction->setIcon(QIcon(":/toolbar/zoomOut.png"));
-    importAction->setIcon(QIcon(":/toolbar/folder.png"));
-    exportAction->setIcon(QIcon(":/toolbar/save.png"));
+
+    copyAction->setIcon(QIcon(":/toolbar/copy.png"));
 
     QMenu* alignMenu = new QMenu;
     alignMenu->addAction(addAction);
     alignMenu->addAction(removeAction);
-    alignMenu->addAction(importAction);
-    alignMenu->addAction(exportAction);
 
     ui->pinOptions->setPopupMode(QToolButton::MenuButtonPopup);
     ui->pinOptions->setMenu(alignMenu);
     ui->pinOptions->setDefaultAction(addAction);
 
-    connect(ui->tableWidget, &QTableWidget::cellDoubleClicked, this, &FpgaConfig::onEditPortMapping);
+    ui->copyToClipboard->setDefaultAction(copyAction);
+
+    connect(ui->tableWidget, &QTableWidget::cellDoubleClicked, this, &RemoteDeviceConfig::onEditPortMapping);
 
     ui->ping->setText("Ping: ...");
     elm->sendPing();
 
     onTimeRefresh();
 
-    connect(&this->timer, &QTimer::timeout, this, &FpgaConfig::onTimeRefresh);
+    connect(&this->timer, &QTimer::timeout, this, &RemoteDeviceConfig::onTimeRefresh);
     this->timer.start(1000);
 
-    ui->methodLabel->setText(QString::fromStdString(elm->getDeviceAuth()));
+    ui->methodLabel->setText(QString::fromStdString(elm->getDeviceAuth().name));
+    ui->methodTokenFrame->hide();
+
+    if (elm->getDeviceMethod().compare("VirtualHere") == 0) {
+        ui->content->setText(QString::fromStdString(elm->getDeviceAuth().token));
+        ui->methodTokenFrame->show();
+    }
 
     // pins
 
@@ -314,11 +340,11 @@ void FpgaConfig::setupConfigScreen() {
     }
 }
 
-void FpgaConfig::start() {
+void RemoteDeviceConfig::start() {
     exec();
 }
 
-void FpgaConfig::connectionResponse(QNetworkReply* reply) {
+void RemoteDeviceConfig::connectionResponse(QNetworkReply* reply) {
     QByteArray repliedData;
     repliedData = reply->readAll();
 
@@ -333,27 +359,63 @@ void FpgaConfig::connectionResponse(QNetworkReply* reply) {
             QPixmap online( ":/remote/online.png" );
             QPixmap offline( ":/remote/offline.png" );
 
-            if (json["status"].toString() == "available") {
+            if (json["status"].toString() == "Online") {
                 ui->status->setPixmap(online.scaled(ui->status->width(), ui->status->height(), Qt::KeepAspectRatio));
             } else {
                 ui->status->setPixmap(offline.scaled(ui->status->width(), ui->status->height(), Qt::KeepAspectRatio));
             }
 
-            ui->statusLabel->setText(json["status"].toString() != "" ? json["status"].toString() : "offline");
+            ui->statusLabel->setText(json["status"].toString() != "" ? json["status"].toString() : "Offline");
+            ui->uptimeLabel->setText("Uptime: " + json["uptime"].toString());
 
             ui->deviceSelector->clear();
-            int totalSlots = 0;
+            ui->methodSelector->clear();
 
-            QVariantMap devices = json_map["devices"].toMap();
-            QStringList key_list = devices.keys();
-            for(int i=0; i < key_list.count(); ++i) {
-                QString key = key_list.at(i);
-                int amount = devices[key].toInt();
-                ui->deviceSelector->addItem(QString ("%1 [%2]").arg(key).arg(amount));
-                totalSlots += amount;
+            int totalAmount = 0;
+            int avaliableAmount = 0;
+
+            {
+                QVariantMap devicesAmount = json_map["devices"].toMap();
+                QStringList key_list = devicesAmount.keys();
+                for(int i=0; i < key_list.count(); ++i) {
+                    QString key = key_list.at(i);
+                    int deviceId = devicesAmount[key].toInt();
+                    ui->deviceSelector->addItem(QString ("%1").arg(key), QVariant::fromValue(deviceId));
+                }
             }
 
-            ui->lcd->display(totalSlots);
+            {
+                QVariantMap devicesAmount = json_map["devicesAmount"].toMap();
+                QStringList key_list = devicesAmount.keys();
+                for(int i=0; i < key_list.count(); ++i) {
+                    QString key = key_list.at(i);
+                    int amount = devicesAmount[key].toInt();
+                    totalAmount += amount;
+                }
+            }
+
+            {
+                QVariantMap devicesAvailable = json_map["devicesAvailable"].toMap();
+                QStringList key_list = devicesAvailable.keys();
+                for(int i=0; i < key_list.count(); ++i) {
+                    QString key = key_list.at(i);
+                    int amount = devicesAvailable[key].toInt();
+                    avaliableAmount += amount;
+                }
+            }
+
+            {
+                QVariantMap methods = json_map["methods"].toMap();
+                QStringList key_list = methods.keys();
+                for(int i=0; i < key_list.count(); ++i) {
+                    QString key = key_list.at(i);
+                    int methodId = methods[key].toInt();
+                    ui->methodSelector->addItem(QString ("%1").arg(key), QVariant::fromValue(methodId));
+                }
+            }
+
+            ui->lcdTotal->display(totalAmount);
+            ui->lcdAmount->display(avaliableAmount);
         } else if (reply->property("req") == "connect") {
             if (json["reply"] != "ok") {
                 QMessageBox messageBox;
@@ -380,7 +442,10 @@ void FpgaConfig::connectionResponse(QNetworkReply* reply) {
 
             host = info.addresses().first().toString();
 
-            if (!elm->connectTo(host.toStdString(), json["port"].toInt(), json["token"].toString().toStdString(), ui->deviceSelector->currentIndex()+1)) {
+            uint8_t deviceTypeId = ui->deviceSelector->currentData().toUInt();
+            uint8_t methodId = ui->methodSelector->currentData().toUInt();
+
+            if (!elm->connectTo(host.toStdString(), json["port"].toInt(), json["token"].toString().toStdString(), deviceTypeId, methodId)) {
                 QMessageBox messageBox;
                 messageBox.critical(0,"Error","Connection failure !");
                 messageBox.setFixedSize(500,200);
@@ -430,7 +495,7 @@ void FpgaConfig::connectionResponse(QNetworkReply* reply) {
     }
 }
 
-void FpgaConfig::updateServiceInfo(QString str) {
+void RemoteDeviceConfig::updateServiceInfo(QString str) {
     auto& options = this->elm->getOptions();
     auto it = options.begin();
 
@@ -474,8 +539,9 @@ void FpgaConfig::updateServiceInfo(QString str) {
         ui->logo->setPixmap(unavailable.scaled(ui->logo->width(), ui->logo->height(), Qt::KeepAspectRatio));
         ui->status->setPixmap(searching.scaled(ui->status->width(), ui->status->height(), Qt::KeepAspectRatio));
         ui->deviceSelector->clear();
-        ui->statusLabel->setText("searching...");
-        ui->lcd->display(0);
+        ui->statusLabel->setText("Searching...");
+        ui->lcdTotal->display(0);
+        ui->lcdAmount->display(0);
     } else {
         QMessageBox messageBox;
         messageBox.critical(0,"Error","There are not available services");
@@ -484,7 +550,7 @@ void FpgaConfig::updateServiceInfo(QString str) {
     }
 }
 
-void FpgaConfig::onTryToConnect() {
+void RemoteDeviceConfig::onTryToConnect() {
     QNetworkRequest request;
     request.setUrl(QUrl(QString::fromStdString(currentOption.getUrl())+"login"));
     request.setRawHeader("User-Agent", "WiredPanda 1.0");
@@ -526,11 +592,11 @@ void FpgaConfig::onTryToConnect() {
     reply->setProperty("req", "connect");
 }
 
-void FpgaConfig::comboboxItemChanged(QString currentSelected) {
+void RemoteDeviceConfig::comboboxItemChanged(QString currentSelected) {
     updateServiceInfo(currentSelected);
 }
 
-void FpgaConfig::onApplyConfig(QAbstractButton* btn)
+void RemoteDeviceConfig::onApplyConfig(QAbstractButton* btn)
 {
     if (btn->text() == "Apply") {
         COMMENT("APPLIED!", 0);
@@ -540,7 +606,25 @@ void FpgaConfig::onApplyConfig(QAbstractButton* btn)
     }
 }
 
-void FpgaConfig::onRejectConfig()
+void RemoteDeviceConfig::onRejectConfig()
 {
     COMMENT("REJECTED!", 0);
+}
+
+void RemoteDeviceConfig::onCopyToClipboard()
+{
+    QClipboard *clipboard = QGuiApplication::clipboard();
+
+    clipboard->clear();
+    clipboard->setText(QString::fromStdString(elm->getDeviceAuth().token));
+}
+
+void RemoteDeviceConfig::on_disconnectBtn_clicked()
+{
+    elm->disconnect();
+
+    QMessageBox messageBox;
+    messageBox.information(0,"Info","Disconnected successfully!");
+    messageBox.setFixedSize(500,200);
+    this->close();
 }

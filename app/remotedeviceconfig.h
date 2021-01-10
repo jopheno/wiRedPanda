@@ -2,7 +2,7 @@
 #define FPGACONFIG_H
 
 #include "editor.h"
-#include "fpga.h"
+#include "remotedevice.h"
 
 #include <QDialog>
 #include <QTextStream>
@@ -12,15 +12,15 @@
 #include <QLocalSocket>
 
 namespace Ui {
-  class FpgaConfig;
+  class RemoteDeviceConfig;
 }
 
-class FpgaConfig : public QDialog {
+class RemoteDeviceConfig : public QDialog {
   Q_OBJECT
 
 public:
-  explicit FpgaConfig( Editor *editor, QWidget *parent = nullptr, GraphicElement *elm = nullptr );
-  ~FpgaConfig( );
+  explicit RemoteDeviceConfig( Editor *editor, QWidget *parent = nullptr, GraphicElement *elm = nullptr );
+  ~RemoteDeviceConfig( );
 
   void start();
   void setupAuthScreen();
@@ -35,8 +35,8 @@ private slots:
   // Actions
   void onAddPin();
   void onRemovePin();
-  void onImportPinList();
-  void onExportPinList();
+
+  void onCopyToClipboard();
 
   void onTimeRefresh();
 
@@ -47,9 +47,11 @@ private slots:
   void onApplyConfig(QAbstractButton* btn);
   void onRejectConfig();
 
+  void on_disconnectBtn_clicked();
+
 private:
-  Ui::FpgaConfig *ui;
-  Fpga *elm;
+  Ui::RemoteDeviceConfig *ui;
+  RemoteDevice *elm;
   Editor *editor;
   QNetworkAccessManager *manager;
   RemoteLabOption currentOption;

@@ -61,16 +61,21 @@ struct Pin {
   static PIN_TYPE convertTypeString(const std::string& typeName);
 };
 
-class Fpga : public GraphicElement {
+struct DeviceAuth {
+    std::string name;
+    std::string token;
+};
+
+class RemoteDevice : public GraphicElement {
   bool lastClk;
   bool lastValue;
   uint16_t deviceId;
   uint16_t latency;
   std::string authToken;
   std::string deviceMethod;
-  std::string deviceAuth;
+  DeviceAuth deviceAuth;
 
-  std::list<RemoteLabOption> options;
+  static std::list<RemoteLabOption> options;
   std::list<Pin> availablePins;
   std::list<Pin> mappedPins;
 
@@ -79,17 +84,33 @@ class Fpga : public GraphicElement {
 
   RemoteLabOption currentOption;
   QTcpSocket socket;
+  QTimer timer;
 
 public:
-  explicit Fpga( QGraphicsItem *parent = nullptr );
-  virtual ~Fpga( ) override;
+  explicit RemoteDevice( QGraphicsItem *parent = nullptr );
+  virtual ~RemoteDevice( ) override;
 
   void setupPorts( );
 
-  bool connectTo(const std::string& host, int port, const std::string& token, uint8_t deviceTypeId);
+  bool connectTo(const std::string& host, int port, const std::string& token, uint8_t deviceTypeId, uint8_t methodId);
   void sendPing();
   void sendIOInfo();
   void sendUpdateInput(uint32_t id, uint8_t value);
+
+  void onTimeRefresh();
+
+  void disconnect() {
+      if (socket.isOpen()) {
+          socket.disconnectFromHost();
+          socket.waitForDisconnected(1000);
+      }
+
+      // will no longer trigger the setup window
+      setAuthToken("");
+
+      // reset available pins, the mapped one shall still be configured (in case of incompatibility, they will not be applied)
+      availablePins.clear();
+  }
 
   const std::string& getAuthToken() const { return authToken; }
   void setAuthToken(const std::string& token) {
@@ -101,9 +122,9 @@ public:
       deviceMethod = method;
   }
 
-  const std::string& getDeviceAuth() const { return deviceAuth; }
-  void setDeviceAuth(const std::string& token) {
-      deviceAuth = token;
+  const DeviceAuth& getDeviceAuth() const { return deviceAuth; }
+  void setDeviceAuth(const std::string& name, const std::string& token) {
+      deviceAuth = {name, token};
   }
 
   uint16_t getDeviceId() const { return deviceId; }
@@ -128,7 +149,8 @@ public:
 
   void resetPortMapping() { mappedPins.clear(); mappedOutputs.clear(); }
   const std::list<Pin>& getMappedPins() const { return mappedPins; }
-  bool mapPin(const std::string& name, uint8_t pinType) {
+
+  uint32_t getPinId(const std::string& name, uint8_t pinType) {
       const std::list<Pin>& list = getAvailablePins();
       std::list<Pin>::const_iterator it;
 
@@ -137,16 +159,39 @@ public:
 
           if (p.getName().compare(name) == 0) {
               if (static_cast<int>(p.getType()) == PIN_GENERAL_PURPOSE || static_cast<int>(p.getType()) == static_cast<int>(pinType)) {
-                  mappedPins.push_back(Pin(p.id, name, static_cast<PIN_TYPE>(pinType)));
 
-                  if (pinType == PIN_TYPE::PIN_INPUT) { mappedInputs[p.id] = false; }
-                  if (pinType == PIN_TYPE::PIN_OUTPUT) { mappedOutputs[p.id] = false; }
+                  std::list<Pin>::const_iterator mapped_it = getMappedPins().begin();
 
-                  return true;
+                  while (mapped_it != getMappedPins().end()) {
+                      if (mapped_it->getName().compare(name) == 0)
+                          return 0;
+
+                      ++mapped_it;
+                  }
+
+                  return p.id;
               } else {
-                  return false;
+                  return 0;
               }
           }
+      }
+
+      return 0;
+  }
+
+  bool canBeMapped(const std::string& name, uint8_t pinType) {
+      return (getPinId(name, pinType) != 0);
+  }
+
+  bool mapPin(const std::string& name, uint8_t pinType) {
+      uint32_t id = getPinId(name, pinType);
+
+      if (id != 0) {
+          std::cerr << "Pin(" << id << ", " << name << ", " << static_cast<PIN_TYPE>(pinType) << ")" << std::endl;
+          mappedPins.push_back(Pin(id, name, static_cast<PIN_TYPE>(pinType)));
+          if (pinType == PIN_TYPE::PIN_INPUT) { mappedInputs[id] = false; }
+          if (pinType == PIN_TYPE::PIN_OUTPUT) { mappedOutputs[id] = false; }
+          return true;
       }
 
       return false;
@@ -163,23 +208,29 @@ public:
   const std::map<uint32_t, bool>& getOutputs() { return mappedOutputs; }
   void setOutput(uint32_t id, bool value) { mappedOutputs[id] = value; }
 
+  void loadAvailablePin( QDataStream &ds );
+  void loadMappedPin( QDataStream &ds );
+  void loadRemoteIO( QDataStream &ds, double version );
+
 private slots:
-    void handle(qint64 bytes);
     void readIsDone();
     void close();
 
   // GraphicElement interface
 public:
   virtual ElementType elementType( ) override {
-    return( ElementType::FPGA );
+    return( ElementType::REMOTE );
   }
   virtual ElementGroup elementGroup( ) override {
     return( ElementGroup::REMOTE );
   }
   virtual void updatePorts( ) override;
   void setSkin( bool defaultSkin, QString filename ) override;
-  bool loadSettings( const QDomDocument& xml );
+  static bool loadSettings( const QDomDocument& xml );
   const std::list<RemoteLabOption>& getOptions() { return options; }
+
+  void load( QDataStream &ds, QMap< quint64, QNEPort* > &portMap, double version ) override;
+  void save( QDataStream &ds ) const override;
 };
 
 #endif // FPGA_H

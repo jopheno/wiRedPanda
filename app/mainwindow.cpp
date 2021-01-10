@@ -6,6 +6,7 @@
 #include "mainwindow.h"
 #include "simplewaveform.h"
 #include "thememanager.h"
+#include "remotedevice.h"
 #include "ui_mainwindow.h"
 
 #include <cmath>
@@ -798,9 +799,44 @@ void MainWindow::populateMenu( QSpacerItem *spacer, QString names, QLayout *layo
 /*  layout->setSpacing(10); */
 }
 
+QDomDocument* MainWindow::loadRemoteFunctions() {
+    // Try loading remote lab settings
+    QDomDocument* xml = new QDomDocument();
+    // Load xml file as raw data
+
+    std::cerr << QDir::currentPath().toStdString() << std::endl;
+
+    QFile f("remotelab.xml");
+    if (!f.open(QIODevice::ReadOnly ))
+    {
+      // Error while loading file
+      // Remote functionalities will be disabled
+      return nullptr;
+    }
+
+    // Set data into the QDomDocument before processing
+    xml->setContent(&f);
+    f.close();
+
+    return xml;
+}
+
 void MainWindow::populateLeftMenu( ) {
+  QString InOutItems = "VCC,GND,BUTTON,SWITCH,CLOCK,LED,DISPLAY,DISPLAY14,BUZZER";
+
+  QDomDocument* xml = loadRemoteFunctions();
+
+  if (xml != nullptr) {
+      if ( RemoteDevice::loadSettings(*xml) ) {
+          InOutItems += ",REMOTE";
+      }
+
+      xml->~QDomDocument();
+      free(xml);
+  }
+
   populateMenu( ui->verticalSpacer_InOut,
-                "VCC,GND,BUTTON,SWITCH,CLOCK,LED,DISPLAY,DISPLAY14,BUZZER",
+                InOutItems,
                 ui->scrollAreaWidgetContents_InOut->layout( ) );
   populateMenu( ui->verticalSpacer_Gates,
                 "AND,OR,NOT,NAND,NOR,XOR,XNOR,MUX,DEMUX,NODE",
@@ -808,9 +844,6 @@ void MainWindow::populateLeftMenu( ) {
   populateMenu( ui->verticalSpacer_Memory,
                 "DFLIPFLOP,DLATCH,JKFLIPFLOP,SRFLIPFLOP,TFLIPFLOP",
                 ui->scrollAreaWidgetContents_Memory->layout( ) );
-  populateMenu( ui->verticalSpacer_Remote,
-                "FPGA",
-                ui->scrollAreaWidgetContents_Remote->layout( ) );
 }
 
 
