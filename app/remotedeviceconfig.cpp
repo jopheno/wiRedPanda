@@ -359,6 +359,9 @@ void RemoteDeviceConfig::connectionResponse(QNetworkReply* reply) {
             QPixmap online( ":/remote/online.png" );
             QPixmap offline( ":/remote/offline.png" );
 
+            QString versionStr = json["version"].toString();
+            currentOption.setVersion(versionStr.toStdString());
+
             if (json["status"].toString() == "Online") {
                 ui->status->setPixmap(online.scaled(ui->status->width(), ui->status->height(), Qt::KeepAspectRatio));
             } else {
@@ -551,6 +554,24 @@ void RemoteDeviceConfig::updateServiceInfo(QString str) {
 }
 
 void RemoteDeviceConfig::onTryToConnect() {
+    // verify if the version is compatible before sending connection request
+
+    QString versionStr = QString::fromStdString(currentOption.getVersion());
+    // gets first dot position
+    int firstDotIndex = versionStr.indexOf(".");
+    QStringRef majorVersionStr(&versionStr, 1, firstDotIndex-1);
+    int majorVersion = majorVersionStr.toInt();
+
+    if (MAJOR_REMOTE_VERSION < majorVersion) {
+        QMessageBox messageBox;
+        messageBox.critical(0,"Version mismatch","It seems your version is currently outdated, the version required for this domain is (" + versionStr + ")");
+        return;
+    } else if (MAJOR_REMOTE_VERSION > majorVersion) {
+        QMessageBox messageBox;
+        messageBox.critical(0,"Version mismatch","It seems that the domain is using an outdated version, please contact the administrator");
+        return;
+    }
+
     QNetworkRequest request;
     request.setUrl(QUrl(QString::fromStdString(currentOption.getUrl())+"login"));
     request.setRawHeader("User-Agent", "WiredPanda 1.0");

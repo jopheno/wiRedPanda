@@ -22,10 +22,11 @@ AUTH_METHOD toAuthMethod(QString auth_type);
 struct RemoteLabOption {
   std::string name;
   std::string url;
+  std::string version;
   AUTH_METHOD authMethod;
 
   RemoteLabOption() = default;
-  RemoteLabOption(std::string name, std::string url, AUTH_METHOD auth_method) : name(name), url(url), authMethod(auth_method) {}
+  RemoteLabOption(std::string name, std::string url, AUTH_METHOD auth_method) : name(name), url(url), version("v9999.9999.9999"), authMethod(auth_method) {}
 
   std::string getName() const { return name; }
   std::string getUrl() const {
@@ -36,6 +37,9 @@ struct RemoteLabOption {
 
       return url.toStdString();
   }
+
+  void setVersion(const std::string& version) { this->version = version; }
+  std::string getVersion() const { return version; }
   AUTH_METHOD getAuthMethod() const { return authMethod; }
 };
 
@@ -71,6 +75,7 @@ class RemoteDevice : public GraphicElement {
   bool lastValue;
   uint16_t deviceId;
   uint16_t latency;
+  uint64_t aliveSince;
   std::string authToken;
   std::string deviceMethod;
   DeviceAuth deviceAuth;
@@ -103,6 +108,7 @@ public:
       if (socket.isOpen()) {
           socket.disconnectFromHost();
           socket.waitForDisconnected(1000);
+          socket.close();
       }
 
       // will no longer trigger the setup window
@@ -135,6 +141,12 @@ public:
   uint16_t getLatency() const { return latency; }
   void setLatency(uint16_t milliseconds) {
       latency = milliseconds;
+  }
+
+  bool isAlive() const { return (static_cast<uint64_t>(QDateTime::currentSecsSinceEpoch()) < (getAliveSince() + 10)); }
+  uint64_t getAliveSince() const { return aliveSince; }
+  void setAliveSince(uint64_t epochInSeconds) {
+      aliveSince = epochInSeconds;
   }
 
   const RemoteLabOption getCurrentOption() const { return currentOption; }

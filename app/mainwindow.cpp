@@ -6,7 +6,7 @@
 #include "mainwindow.h"
 #include "simplewaveform.h"
 #include "thememanager.h"
-#include "remotedevice.h"
+#include "remotedeviceconfig.h"
 #include "ui_mainwindow.h"
 
 #include <cmath>
@@ -293,11 +293,17 @@ void MainWindow::on_actionSave_triggered( ) {
 }
 
 void MainWindow::on_actionAbout_triggered( ) {
+  QString remoteVersion("");
+
+  remoteVersion = "<p>Remote version: %1</p>";
+  remoteVersion = remoteVersion.arg(RemoteDeviceConfig::version( ));
+
   QMessageBox::about( this, "wiRED Panda",
                       tr(
                         "<p>wiRED Panda is a software developed by the students of the Federal University of São Paulo."
                         " This project was created in order to help students to learn about logic circuits.</p>"
                         "<p>Software version: %1</p>"
+                        "%2"
                         "<p><strong>Creators:</strong></p>"
                         "<ul>"
                         "<li> Davi Morales </li>"
@@ -307,7 +313,7 @@ void MainWindow::on_actionAbout_triggered( ) {
                         "</ul>"
                         "<p><a href=\"http://gibis-unifesp.github.io/wiRedPanda/\">Visit our website!</a></p>" )
                       .arg(
-                        QApplication::applicationVersion( ) ) );
+                        QApplication::applicationVersion( ), remoteVersion) );
 }
 
 void MainWindow::on_actionAbout_Qt_triggered( ) {

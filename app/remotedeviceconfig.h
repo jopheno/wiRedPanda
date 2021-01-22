@@ -11,6 +11,9 @@
 #include <QAbstractButton>
 #include <QLocalSocket>
 
+#define MAJOR_REMOTE_VERSION 0
+#define MINOR_REMOTE_VERSION 0
+
 namespace Ui {
   class RemoteDeviceConfig;
 }
@@ -27,6 +30,10 @@ public:
   void setupConfigScreen();
   void updateServiceInfo(QString str);
   bool savePortMapping();
+
+  static QString version() {
+      return QString("%1.%2").arg(QString::number(MAJOR_REMOTE_VERSION), QString::number(MINOR_REMOTE_VERSION));
+  }
 
 private slots:
 

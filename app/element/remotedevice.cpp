@@ -1,6 +1,8 @@
 #include "remotedevice.h"
 #include "protocol.h"
 
+#include <QMessageBox>
+
 AUTH_METHOD toAuthMethod(std::string auth_type) {
   static const std::map<std::string, AUTH_METHOD> optionStrings {
     { "plain", AUTH_METHOD::PLAIN },
@@ -90,12 +92,22 @@ RemoteDevice::~RemoteDevice() {
 }
 
 void RemoteDevice::onTimeRefresh() {
-    if(socket.isOpen())
+    if(socket.isOpen()) {
         sendPing();
+
+        if (!isAlive()) {
+            disconnect();
+
+            QMessageBox messageBox;
+            messageBox.critical(0,"Disconnected","Sorry, we were unable to keep your connection up.\nPlease consider reconnecting, or checking if you are still connected to the internet.");
+            messageBox.setFixedSize(500,200);
+        }
+    }
 }
 
 bool RemoteDevice::connectTo(const std::string& host, int port, const std::string& token, uint8_t deviceTypeId, uint8_t methodId) {
     COMMENT( "Connecting to " + host, 0 );
+    setAliveSince(QDateTime::currentSecsSinceEpoch());
     socket.connectToHost(QString::fromStdString(host), port);
     if (socket.waitForConnected(5000)) {
         NetworkOutgoingMessage msg(1);

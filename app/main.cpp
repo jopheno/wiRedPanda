@@ -4,6 +4,9 @@
 #include <QCommandLineParser>
 
 int main( int argc, char *argv[] ) {
+  // Disables HIGH_DPI Scaling
+  QApplication::setAttribute(Qt::AA_Use96Dpi);
+
   QApplication a( argc, argv );
   a.setOrganizationName( "GIBIS-UNIFESP" );
   a.setApplicationName( "WiredPanda" );

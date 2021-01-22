@@ -85,7 +85,9 @@ void RemoteProtocol::parse_pong(RemoteDevice* elm, NetworkIncomingMessage& imsg)
     uint64_t timestamp = imsg.pop<uint64_t>();
 
     uint64_t current = QDateTime::currentMSecsSinceEpoch();
+
     elm->setLatency(current-timestamp);
+    elm->setAliveSince(QDateTime::currentSecsSinceEpoch());
 }
 
 void RemoteProtocol::parse_output(RemoteDevice* elm, NetworkIncomingMessage& imsg) {
