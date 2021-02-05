@@ -171,7 +171,7 @@ LogicElement* ElementMapping::buildLogicElement( GraphicElement *elm ) {
             if ((remoteDevice = dynamic_cast<RemoteDevice*>(elm)))
                 return( new LogicRemoteDevice( remoteDevice ) );
 
-            throw std::runtime_error( "Unable to create an FPGA logic element: " + elm->objectName( ).toStdString( ) );
+            throw std::runtime_error( "Unable to create a remote device logic element: " + elm->objectName( ).toStdString( ) );
       }
 
       default:

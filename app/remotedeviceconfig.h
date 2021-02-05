@@ -28,6 +28,7 @@ public:
   void start();
   void setupAuthScreen();
   void setupConfigScreen();
+  void setupQueueScreen();
   void updateServiceInfo(QString str);
   bool savePortMapping();
 
@@ -46,6 +47,7 @@ private slots:
   void onCopyToClipboard();
 
   void onTimeRefresh();
+  void onQueueTimeRefresh();
 
   void onTryToConnect();
   void onEditPortMapping(int row, int column);
@@ -55,6 +57,8 @@ private slots:
   void onRejectConfig();
 
   void on_disconnectBtn_clicked();
+
+  void on_leaveBtn_clicked();
 
 private:
   Ui::RemoteDeviceConfig *ui;

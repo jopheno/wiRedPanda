@@ -53,6 +53,7 @@ GraphicElement::GraphicElement( int minInputSz, int maxInputSz, int minOutputSz,
   m_disabled = false;
   m_outputsOnTop = true;
   m_hasCustomConfig = false;
+  m_customPixmap = false;
 
   COMMENT( "Including input and output ports.", 4 );
   for( int i = 0; i < minInputSz; i++ ) {
@@ -110,6 +111,9 @@ void GraphicElement::setPixmap( const QString &pixmapName, QRect size ) {
     update( boundingRect( ) );
   }
   currentPixmapName = pixmapName;
+
+  // update bottom position for wires to come in the correct place
+  setBottomPosition( getPixmap().rect().height() );
 }
 
 QVector< QNEOutputPort* > GraphicElement::outputs( ) const {
@@ -443,9 +447,13 @@ void GraphicElement::updatePorts( ) {
     inputPos = m_bottomPosition;
     outputPos = m_topPosition;
   }
+
+  const QRect& rect = getPixmap().rect();
+  int width = rect.width()/2;
+
   if( !m_outputs.isEmpty( ) ) {
-    int step = qMax( 32 / m_outputs.size( ), 6 );
-    int x = 32 - m_outputs.size( ) * step + step;
+    int step = qMax( width / m_outputs.size( ), 6 );
+    int x = width - m_outputs.size( ) * step + step;
     foreach( QNEPort * port, m_outputs ) {
       port->setPos( x, outputPos );
       port->update( );
@@ -453,8 +461,8 @@ void GraphicElement::updatePorts( ) {
     }
   }
   if( !m_inputs.isEmpty( ) ) {
-    int step = qMax( 32 / m_inputs.size( ), 6 );
-    int x = 32 - m_inputs.size( ) * step + step;
+    int step = qMax( width / m_inputs.size( ), 6 );
+    int x = width - m_inputs.size( ) * step + step;
     foreach( QNEPort * port, m_inputs ) {
       port->setPos( x, inputPos );
       port->update( );

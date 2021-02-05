@@ -73,12 +73,28 @@ struct DeviceAuth {
 class RemoteDevice : public GraphicElement {
   bool lastClk;
   bool lastValue;
+  bool connected;
+
+  uint8_t deviceTypeId;
+  uint8_t methodId;
   uint16_t deviceId;
   uint16_t latency;
+  uint64_t minWaitTime;
+  uint64_t afterTimeStartedEpoch;
   uint64_t aliveSince;
+  uint64_t allowUntil;
+  uint64_t startedTimeEpoch;
+  long timeAllowed;
   std::string authToken;
   std::string deviceMethod;
   DeviceAuth deviceAuth;
+
+  // Queue
+  bool inQueue;
+  uint8_t queuePos;
+  uint32_t deviceAllowedTime;
+  uint64_t queueWaitingSinceEpoch;
+  uint64_t queueEstimatedEpoch;
 
   static std::list<RemoteLabOption> options;
   std::list<Pin> availablePins;
@@ -101,6 +117,7 @@ public:
   void sendPing();
   void sendIOInfo();
   void sendUpdateInput(uint32_t id, uint8_t value);
+  void sendRequestToEnterQueue(const QString& token);
 
   void onTimeRefresh();
 
@@ -116,6 +133,17 @@ public:
 
       // reset available pins, the mapped one shall still be configured (in case of incompatibility, they will not be applied)
       availablePins.clear();
+
+      // reset time variables
+      minWaitTime = 0;
+      aliveSince = 0;
+      allowUntil = 0;
+      afterTimeStartedEpoch = 0;
+      startedTimeEpoch = 0;
+
+      connected = false;
+
+      update();
   }
 
   const std::string& getAuthToken() const { return authToken; }
@@ -133,6 +161,8 @@ public:
       deviceAuth = {name, token};
   }
 
+  uint16_t getDeviceMethodId() const { return methodId; }
+  uint16_t getDeviceTypeId() const { return deviceTypeId; }
   uint16_t getDeviceId() const { return deviceId; }
   void setDeviceId(uint16_t id) {
       deviceId = id;
@@ -148,6 +178,43 @@ public:
   void setAliveSince(uint64_t epochInSeconds) {
       aliveSince = epochInSeconds;
   }
+
+  uint64_t getTotalAllowUntil() const { return allowUntil + static_cast<uint64_t>(getMinWaitTime()); }
+  uint64_t getAllowUntil() const { return allowUntil; }
+  void setAllowUntil(uint64_t epochInSeconds) {
+      allowUntil = epochInSeconds;
+  }
+
+  uint64_t getMinWaitTime() const { return minWaitTime; }
+  void setMinWaitTime(uint64_t epochInSeconds) {
+      minWaitTime = epochInSeconds;
+  }
+
+  long getTimeAllowed() const { return timeAllowed; }
+  uint64_t getStartedTimeEpoch() const { return startedTimeEpoch; }
+  void initTimeCount() {
+      startedTimeEpoch = QDateTime::currentSecsSinceEpoch();
+      timeAllowed = static_cast<long>(getTotalAllowUntil() - startedTimeEpoch);
+
+      if (timeAllowed < 0)
+          timeAllowed = 0;
+  }
+
+  uint64_t getAfterTimeStartedEpoch() const { return afterTimeStartedEpoch; }
+  bool hasAfterTimeStarted() const { return afterTimeStartedEpoch != 0; }
+  long getAvailableAfterTime() const {
+      if (!hasAfterTimeStarted())
+          return minWaitTime;
+
+      uint64_t currentEpoch = QDateTime::currentSecsSinceEpoch();
+      long passedTime = static_cast<long>(currentEpoch - afterTimeStartedEpoch);
+
+      if (passedTime < 0)
+          return minWaitTime;
+
+      return static_cast<long>(minWaitTime) - passedTime;
+  }
+  void startAfterTime(uint64_t epochInSeconds) { afterTimeStartedEpoch = epochInSeconds; }
 
   const RemoteLabOption getCurrentOption() const { return currentOption; }
   void setCurrentOption(const RemoteLabOption option) {
@@ -224,6 +291,23 @@ public:
   void loadMappedPin( QDataStream &ds );
   void loadRemoteIO( QDataStream &ds, double version );
 
+  // Queue
+  bool isInQueue() const { return inQueue; }
+  void setIsInQueue(bool boolean) {
+    inQueue = boolean;
+    queueWaitingSinceEpoch = QDateTime::currentSecsSinceEpoch();
+  }
+  uint8_t getQueuePos() const { return queuePos; }
+  void setQueuePos(uint8_t pos) { queuePos = pos; }
+  uint64_t getQueueEstimatedEpoch() const { return queueEstimatedEpoch; }
+  void setQueueEstimatedEpoch(uint64_t epoch) { queueEstimatedEpoch = epoch; }
+  uint64_t getWaitingSince() const { return queueWaitingSinceEpoch; }
+  uint32_t getDeviceAllowedTime() const { return deviceAllowedTime; }
+  void setDeviceAllowedTime(uint32_t timeInSeconds) { deviceAllowedTime = timeInSeconds; }
+
+  void paint( QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget ) override;
+  bool isConnected() const { return connected; }
+
 private slots:
     void readIsDone();
     void close();
@@ -237,7 +321,7 @@ public:
     return( ElementGroup::REMOTE );
   }
   virtual void updatePorts( ) override;
-  void setSkin( bool defaultSkin, QString filename ) override;
+  void setSkin( bool defaultSkin, QString filename ) override { };
   static bool loadSettings( const QDomDocument& xml );
   const std::list<RemoteLabOption>& getOptions() { return options; }
 

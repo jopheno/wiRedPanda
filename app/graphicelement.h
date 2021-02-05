@@ -40,12 +40,14 @@ public:
   enum { Type = QGraphicsItem::UserType + 3 };
 
   explicit GraphicElement( int minInputSz, int maxInputSz, int minOutputSz, int maxOutputSz, QGraphicsItem *parent = nullptr );
+  ~GraphicElement() { if (m_customPixmap) delete pixmap;}
 
 private:
   QPixmap *pixmap;
   QString currentPixmapName;
   QColor m_selectionBrush;
   QColor m_selectionPen;
+  bool m_customPixmap;
 
 protected:
   QVector< QString > pixmapSkinName;

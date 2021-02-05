@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "protocol.h"
 
 #include <QApplication>
 #include <QCommandLineParser>
@@ -34,6 +35,9 @@ int main( int argc, char *argv[] ) {
 
   MainWindow w;
   w.show( );
+
+  // Initialize TCP Network Protocol
+  RemoteProtocol::init(&w);
 
   QStringList args = parser.positionalArguments( );
   if( args.size( ) > 0 ) {

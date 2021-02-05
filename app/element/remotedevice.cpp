@@ -2,6 +2,7 @@
 #include "protocol.h"
 
 #include <QMessageBox>
+#include <QPainter>
 
 AUTH_METHOD toAuthMethod(std::string auth_type) {
   static const std::map<std::string, AUTH_METHOD> optionStrings {
@@ -38,8 +39,9 @@ PIN_TYPE Pin::convertTypeString(const std::string& typeName) {
 std::list<RemoteLabOption> RemoteDevice::options;
 
 RemoteDevice::RemoteDevice( QGraphicsItem *parent ) : GraphicElement( 0, 55, 0, 55, parent ) {
-  pixmapSkinName.append( ":/remote/fpgaBox.png" );
+  pixmapSkinName.append( ":/remote/device/base.png" );
   setPixmap( pixmapSkinName[ 0 ] );
+
   setRotatable( false );
   setupPorts( );
   updatePorts( );
@@ -48,8 +50,24 @@ RemoteDevice::RemoteDevice( QGraphicsItem *parent ) : GraphicElement( 0, 55, 0, 
   lastValue = false;
   lastClk = false;
   deviceId = 0;
+  deviceTypeId = 0;
   authToken = "";
   deviceAuth = {"", ""};
+
+  minWaitTime = 0;
+  aliveSince = 0;
+  allowUntil = 0;
+  afterTimeStartedEpoch = 0;
+  startedTimeEpoch = 0;
+
+  // Queue
+  inQueue = false;
+  queuePos = 0;
+  deviceAllowedTime = 0;
+  queueWaitingSinceEpoch = 0;
+  queueEstimatedEpoch = 0;
+
+  connected = 0;
 
   // Try loading remote lab settings
   QDomDocument xml;
@@ -94,19 +112,27 @@ RemoteDevice::~RemoteDevice() {
 void RemoteDevice::onTimeRefresh() {
     if(socket.isOpen()) {
         sendPing();
+        update();
 
         if (!isAlive()) {
-            disconnect();
+            if (getAuthToken().compare("") != 0) {
+                QMessageBox* messageBox = new QMessageBox();
+                messageBox->setAttribute(Qt::WA_DeleteOnClose);
+                messageBox->setModal( false );
+                messageBox->critical(0,"Disconnected","Sorry, we were unable to keep your connection up.\nPlease consider reconnecting, or checking if you are still connected to the internet.");
+            }
 
-            QMessageBox messageBox;
-            messageBox.critical(0,"Disconnected","Sorry, we were unable to keep your connection up.\nPlease consider reconnecting, or checking if you are still connected to the internet.");
-            messageBox.setFixedSize(500,200);
+            disconnect();
         }
     }
 }
 
 bool RemoteDevice::connectTo(const std::string& host, int port, const std::string& token, uint8_t deviceTypeId, uint8_t methodId) {
     COMMENT( "Connecting to " + host, 0 );
+
+    this->deviceTypeId = deviceTypeId;
+    this->methodId = methodId;
+
     setAliveSince(QDateTime::currentSecsSinceEpoch());
     socket.connectToHost(QString::fromStdString(host), port);
     if (socket.waitForConnected(5000)) {
@@ -140,6 +166,11 @@ void RemoteDevice::sendIOInfo() {
 
 void RemoteDevice::sendUpdateInput(uint32_t id, uint8_t value) {
     NetworkOutgoingMessage msg = RemoteProtocol::sendUpdateInput(id, value);
+    socket.write(msg);
+}
+
+void RemoteDevice::sendRequestToEnterQueue(const QString& token) {
+    NetworkOutgoingMessage msg = RemoteProtocol::sendRequestToWaitOnQueue(this, token);
     socket.write(msg);
 }
 
@@ -207,18 +238,45 @@ void RemoteDevice::setupPorts( ) {
         outputAmount++;
       }
     }
+
+    connected = true;
+}
+
+void RemoteDevice::paint( QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget ) {
+
+    QPixmap status_on(":/remote/device/status_on.png" );
+    QPixmap status_off(":/remote/device/status_off.png" );
+
+    QPixmap latency_0(":/remote/device/latency_0.png" );
+    QPixmap latency_1(":/remote/device/latency_1.png" );
+    QPixmap latency_2(":/remote/device/latency_2.png" );
+    QPixmap latency_3(":/remote/device/latency_3.png" );
+    QPixmap latency_4(":/remote/device/latency_4.png" );
+
+    GraphicElement::paint( painter, option, widget );
+
+    if (isConnected())
+        painter->drawPixmap(QPoint( 0, 0 ), status_on, status_on.rect());
+    else
+        painter->drawPixmap(QPoint( 0, 0 ), status_off, status_off.rect());
+
+    if (getAuthToken() != "") {
+        if (latency <= 20)
+            painter->drawPixmap(QPoint( 0, 0 ), latency_4, latency_4.rect());
+        else if(latency > 20 && latency <= 70)
+            painter->drawPixmap(QPoint( 0, 0 ), latency_3, latency_3.rect());
+        else if (latency > 70 && latency <= 130)
+            painter->drawPixmap(QPoint( 0, 0 ), latency_2, latency_2.rect());
+        else if (latency > 130 && latency <= 180)
+            painter->drawPixmap(QPoint( 0, 0 ), latency_1, latency_1.rect());
+        else if (latency > 180)
+            painter->drawPixmap(QPoint( 0, 0 ), latency_0, latency_0.rect());
+    } else
+        painter->drawPixmap(QPoint( 0, 0 ), latency_0, latency_0.rect());
 }
 
 void RemoteDevice::updatePorts( ) {
   GraphicElement::updatePorts();
-}
-
-void RemoteDevice::setSkin( bool defaultSkin, QString filename ) {
-  if( defaultSkin )
-    pixmapSkinName[ 0 ] = ":/remote/RemoteDeviceBox.png";
-  else
-    pixmapSkinName[ 0 ] = filename;
-  setPixmap( pixmapSkinName[ 0 ] );
 }
 
 bool RemoteDevice::loadSettings(const QDomDocument& xml) {
@@ -280,6 +338,7 @@ void RemoteDevice::loadAvailablePin( QDataStream &ds ) {
   ds >> portType;
 
   addPin(portId, portName.toStdString(), portType);
+  std::cerr << "> ADD at `loadAvailablePin` " << static_cast<int>(portId) << ", " << portName.toStdString() << ", " << static_cast<int>(portType) << std::endl;
 }
 
 void RemoteDevice::loadMappedPin( QDataStream &ds ) {
@@ -299,6 +358,7 @@ void RemoteDevice::loadRemoteIO( QDataStream &ds, double version ) {
 
     quint32 availablePinsAmount;
     ds >> availablePinsAmount;
+    std::cerr << "> availablePinsAmount `loadRemoteIO` " << static_cast<int>(availablePinsAmount) << std::endl;
     for( size_t index = 0; index < availablePinsAmount; ++index ) {
       loadAvailablePin( ds );
     }

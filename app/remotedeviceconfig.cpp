@@ -10,6 +10,7 @@
 #include <QPixmap>
 #include <QMenu>
 #include <QAction>
+#include <QMovie>
 
 RemoteDeviceConfig::RemoteDeviceConfig( Editor *editor, QWidget *parent, GraphicElement *elm ) : QDialog( parent ), ui( new Ui::RemoteDeviceConfig ), editor( editor ), manager(new QNetworkAccessManager(this)) {
   ui->setupUi( this );
@@ -25,7 +26,10 @@ RemoteDeviceConfig::RemoteDeviceConfig( Editor *editor, QWidget *parent, Graphic
   QPixmap unavailable( ":/remote/unavailable.png" );
   ui->logo->setPixmap(unavailable.scaled(ui->logo->width(), ui->logo->height(), Qt::KeepAspectRatio));
 
-  manager->setTransferTimeout(500);
+  ui->progressBar->setMinimum(0);
+  ui->progressBar->setMaximum(100);
+
+  manager->setTransferTimeout(1000);
 
   connect(manager, &QNetworkAccessManager::finished,
           this, &RemoteDeviceConfig::connectionResponse);
@@ -36,6 +40,8 @@ RemoteDeviceConfig::RemoteDeviceConfig( Editor *editor, QWidget *parent, Graphic
 
   if (this->elm->getAuthToken() == "") {
     setupAuthScreen();
+  } else if (this->elm->isInQueue()) {
+    setupQueueScreen();
   } else {
     setupConfigScreen();
   }
@@ -46,7 +52,22 @@ RemoteDeviceConfig::~RemoteDeviceConfig() {
     delete ui;
 }
 
+void RemoteDeviceConfig::setupQueueScreen() {
+    ui->stackedWidget->setCurrentIndex(2);
+
+    QMovie *movie = new QMovie(":/remote/loading.gif");
+    ui->waiting_list_logo->setMovie(movie);
+    movie->start();
+
+    onQueueTimeRefresh();
+
+    connect(&this->timer, &QTimer::timeout, this, &RemoteDeviceConfig::onQueueTimeRefresh);
+    this->timer.start(1000);
+}
+
 void RemoteDeviceConfig::setupAuthScreen() {
+    ui->stackedWidget->setCurrentIndex(0);
+
     for (auto option : this->elm->getOptions()) {
       ui->serviceSelector->addItem(QString::fromUtf8(option.getName().c_str()));
     }
@@ -144,15 +165,132 @@ bool RemoteDeviceConfig::savePortMapping() {
 
     return true;
 }
+void RemoteDeviceConfig::onQueueTimeRefresh() {
+    uint64_t timestamp = QDateTime::currentSecsSinceEpoch();
+
+    long estimatedTime = static_cast<long>(elm->getQueueEstimatedEpoch() - timestamp);
+
+    int hour = estimatedTime / 3600;
+    int min = (estimatedTime % 3600) / 60;
+    int secs = estimatedTime % 60;
+
+    if (hour < 0)
+        hour = 0;
+
+    if (min < 0)
+        min = 0;
+
+    if (secs < 0)
+        secs = 0;
+
+    QString hourStr = QString::number(hour).rightJustified(2, '0');
+    QString minStr = QString::number(min).rightJustified(2, '0');
+    QString secsStr = QString::number(secs).rightJustified(2, '0');
+
+    // changing separator from double dots sign to empty space makes a simple clock animation
+    QString separator = ":";
+    if (timestamp % 2 == 0)
+        separator = " ";
+
+    ui->timeEstimated->display(hourStr + separator + minStr + separator + secsStr);
+
+    ui->estimatedTimeProgressBar->setMinimum(0);
+    ui->estimatedTimeProgressBar->setMaximum(100);
+
+    int estimatedSeconds = static_cast<int>(elm->getQueueEstimatedEpoch() - elm->getWaitingSince());
+
+    if (estimatedSeconds <= 0)
+        estimatedSeconds = 1;
+
+    int secondsPassed = static_cast<int>(timestamp - elm->getWaitingSince());
+
+    if (secondsPassed <= 0)
+        secondsPassed = 0;
+
+    ui->estimatedTimeProgressBar->setValue(static_cast<int>(secondsPassed*100.0f/estimatedSeconds));
+
+    QString queueInfoModel = "<html><head/><body><p><span style=\" font-size:12pt;\">You are currently on position </span><span style=\" font-size:12pt; font-weight:600;\">%1</span></p><p>Please be patient and you will receive at least %2 to use this device</p></body></html>";
+
+    QString deviceAllowedTime = QDateTime::fromSecsSinceEpoch(static_cast<uint32_t>(elm->getDeviceAllowedTime()), Qt::UTC).toString("mm:ss");
+
+    QString str = queueInfoModel.arg(elm->getQueuePos()).arg(deviceAllowedTime);
+    ui->queueInfoLbl->setText(str);
+
+    // finally in
+    if (!elm->isInQueue()) {
+        if (elm->getDeviceId() != 0)
+            setupConfigScreen();
+        else
+            this->close();
+    }
+}
 
 void RemoteDeviceConfig::onTimeRefresh() {
     static uint16_t last_latency;
 
-    QTime time = QTime::currentTime();
-    QString text = time.toString("hh:mm");
-    if ((time.second() % 2) == 0)
-        text[2] = ' ';
-    ui->timeRemaining->display(text);
+    uint64_t timestamp = QDateTime::currentSecsSinceEpoch();
+
+    {
+        uint64_t allowUntil = elm->getAllowUntil();
+        long timeRemaining = static_cast<long>(allowUntil - timestamp);
+
+        bool allowedTimeExceeded = false;
+
+        // if time already exceeded just consider minTime
+        if (timeRemaining < 0) {
+            timeRemaining = 0;
+            allowedTimeExceeded = true;
+        }
+
+        int min = timeRemaining / 60;
+        int secs = timeRemaining % 60;
+
+        // increases minWaitTime or availableAfterTime to the time left
+        long avaliableAfterTime = elm->getAvailableAfterTime();
+
+        min += avaliableAfterTime / 60;
+        secs += avaliableAfterTime % 60;
+
+        if (secs >= 60) {
+            min += 1;
+            secs -= 60;
+        }
+
+        if (min < 0)
+            min = 0;
+
+        if (secs < 0)
+            secs = 0;
+
+        QString minStr = QString::number(min).rightJustified(2, '0');
+        QString secsStr = QString::number(secs).rightJustified(2, '0');
+
+        // changing separator from double dots sign to empty space makes a simple clock animation
+        QString separator = ":";
+        if (timestamp % 2 == 0)
+            separator = " ";
+
+        ui->timeRemaining->display(minStr + separator + secsStr);
+
+        timeRemaining += static_cast<long>(avaliableAfterTime);
+        int percent = static_cast<int>(static_cast<float>(timeRemaining*100.0f)/static_cast<float>(elm->getTimeAllowed()));
+
+        ui->progressBar->setValue(percent);
+
+        QPalette progressBarPalette;
+
+        if (allowedTimeExceeded) {
+            progressBarPalette.setColor(QPalette::Highlight, Qt::yellow);
+        } else {
+            progressBarPalette.setColor(QPalette::Highlight, Qt::green);
+        }
+
+        ui->progressBar->setPalette(progressBarPalette);
+
+        // Auto closes window when reaching zero seconds
+        if (avaliableAfterTime <= 0)
+            this->close();
+    }
 
     QPalette sample_palette;
     sample_palette.setColor(QPalette::Window, Qt::white);
@@ -167,16 +305,18 @@ void RemoteDeviceConfig::onTimeRefresh() {
     static bool warnedAlready = false;
 
     if (!warnedAlready && elm->getLatency() > 120 && last_latency > 120) {
-        QMessageBox messageBox;
-        messageBox.critical(0,"Warning","Your connection latency is pretty bad, you will not be able to use the remote lab.");
-        messageBox.setFixedSize(500,200);
+        QMessageBox* messageBox = new QMessageBox( this );
+        messageBox->setAttribute(Qt::WA_DeleteOnClose);
+        messageBox->critical(0,"Warning","Your connection latency is pretty bad, you will not be able to use the remote lab.");
+        messageBox->open();
         warnedAlready = true;
     }
 
     if (!warnedAlready && elm->getLatency() > 80 && last_latency > 80) {
-        QMessageBox messageBox;
-        messageBox.critical(0,"Warning","Looks like your connection is pretty unstable, you may not be able to use the remote lab.");
-        messageBox.setFixedSize(500,200);
+        QMessageBox* messageBox = new QMessageBox( this );
+        messageBox->setAttribute(Qt::WA_DeleteOnClose);
+        messageBox->critical(0,"Warning","Looks like your connection is pretty unstable, you may not be able to use the remote lab.");
+        messageBox->open();
         warnedAlready = true;
     }
 
@@ -646,6 +786,14 @@ void RemoteDeviceConfig::on_disconnectBtn_clicked()
 
     QMessageBox messageBox;
     messageBox.information(0,"Info","Disconnected successfully!");
-    messageBox.setFixedSize(500,200);
+    this->close();
+}
+
+void RemoteDeviceConfig::on_leaveBtn_clicked()
+{
+    elm->disconnect();
+
+    QMessageBox messageBox;
+    messageBox.information(0,"Info","You have left the queue!");
     this->close();
 }
