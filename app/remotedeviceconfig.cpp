@@ -76,6 +76,7 @@ void RemoteDeviceConfig::setupAuthScreen() {
 
     connect(ui->serviceSelector, SIGNAL(currentTextChanged(QString)), this, SLOT(comboboxItemChanged(QString)));
     connect(ui->connectButton, SIGNAL(clicked()), this, SLOT(onTryToConnect()));
+    ui->connectButton->setDisabled(false);
 
     updateServiceInfo(currentSelected);
 }
@@ -560,6 +561,8 @@ void RemoteDeviceConfig::connectionResponse(QNetworkReply* reply) {
             ui->lcdTotal->display(totalAmount);
             ui->lcdAmount->display(avaliableAmount);
         } else if (reply->property("req") == "connect") {
+            ui->connectButton->setDisabled(false);
+
             if (json["reply"] != "ok") {
                 QMessageBox messageBox;
                 messageBox.critical(0,"Error",json["msg"].toString());
@@ -696,6 +699,8 @@ void RemoteDeviceConfig::updateServiceInfo(QString str) {
 void RemoteDeviceConfig::onTryToConnect() {
     // verify if the version is compatible before sending connection request
 
+    ui->connectButton->setDisabled(true);
+
     QString versionStr = QString::fromStdString(currentOption.getVersion());
     // gets first dot position
     int firstDotIndex = versionStr.indexOf(".");
@@ -748,7 +753,12 @@ void RemoteDeviceConfig::onTryToConnect() {
     postData.append("login=" + ui->loginInput->text() + "&");
     postData.append("passwd=" + encodedPasswd + "");
 
+    // when logging in, it might take more time
+    // once LDAP service can be quite slow
+    manager->setTransferTimeout(20000);
     QNetworkReply* reply = manager->post(request, postData);
+    manager->setTransferTimeout(1000);
+
     reply->setProperty("type", "json");
     reply->setProperty("req", "connect");
 }
