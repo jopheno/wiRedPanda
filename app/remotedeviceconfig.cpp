@@ -16,7 +16,7 @@ RemoteDeviceConfig::RemoteDeviceConfig( Editor *editor, QWidget *parent, Graphic
   ui->setupUi( this );
 
   setWindowTitle( "Remote Device" );
-  setWindowFlags( Qt::Window );
+  setWindowFlags( Qt::Dialog );
   setModal( true );
   QSettings settings( QSettings::IniFormat, QSettings::UserScope,
                       QApplication::organizationName( ), QApplication::applicationName( ) );
@@ -24,12 +24,12 @@ RemoteDeviceConfig::RemoteDeviceConfig( Editor *editor, QWidget *parent, Graphic
   ui->stackedWidget->setCurrentIndex(0);
 
   QPixmap unavailable( ":/remote/unavailable.png" );
-  ui->logo->setPixmap(unavailable.scaled(ui->logo->width(), ui->logo->height(), Qt::KeepAspectRatio));
+  ui->logo->setPixmap(unavailable);
 
   ui->progressBar->setMinimum(0);
   ui->progressBar->setMaximum(100);
 
-  manager->setTransferTimeout(1000);
+  manager->setTransferTimeout(1500);
 
   connect(manager, &QNetworkAccessManager::finished,
           this, &RemoteDeviceConfig::connectionResponse);
@@ -303,22 +303,30 @@ void RemoteDeviceConfig::onTimeRefresh() {
         sample_palette.setColor(QPalette::WindowText, Qt::darkRed);
     }
 
-    static bool warnedAlready = false;
+    static int warnedAlready = 0;
 
-    if (!warnedAlready && elm->getLatency() > 120 && last_latency > 120) {
-        QMessageBox* messageBox = new QMessageBox( this );
-        messageBox->setAttribute(Qt::WA_DeleteOnClose);
-        messageBox->critical(0,"Warning","Your connection latency is pretty bad, you will not be able to use the remote lab.");
-        messageBox->open();
-        warnedAlready = true;
+    if (warnedAlready < 2 && elm->getLatency() > 120 && last_latency > 120) {
+
+        QMessageBox *msgBox = new QMessageBox( this );
+        msgBox->setIcon( QMessageBox::Critical );
+        msgBox->setText("Your connection latency is pretty bad, you will not be able to use the remote lab.");
+        msgBox->setAttribute(Qt::WA_DeleteOnClose); // delete pointer after close
+        msgBox->show();
+        msgBox->raise();
+
+        warnedAlready = 2;
     }
 
-    if (!warnedAlready && elm->getLatency() > 80 && last_latency > 80) {
-        QMessageBox* messageBox = new QMessageBox( this );
-        messageBox->setAttribute(Qt::WA_DeleteOnClose);
-        messageBox->critical(0,"Warning","Looks like your connection is pretty unstable, you may not be able to use the remote lab.");
-        messageBox->open();
-        warnedAlready = true;
+    if (warnedAlready < 1 && elm->getLatency() > 80 && last_latency > 80) {
+
+        QMessageBox *msgBox = new QMessageBox( this );
+        msgBox->setIcon( QMessageBox::Warning );
+        msgBox->setText("Looks like your connection is pretty unstable, you may not be able to use the remote lab.");
+        msgBox->setAttribute(Qt::WA_DeleteOnClose); // delete pointer after close
+        msgBox->show();
+        msgBox->raise();
+
+        warnedAlready = 1;
     }
 
     last_latency = elm->getLatency();
@@ -455,6 +463,7 @@ void RemoteDeviceConfig::setupConfigScreen() {
         reply->setProperty("req", "setMethod");
     }
 
+    // TODO: Remove QProcess* memory should be freed
     if (elm->getDeviceMethod() == "VirtualHere") {
         #ifdef _WIN32
         // start virtualhere
@@ -615,7 +624,7 @@ void RemoteDeviceConfig::connectionResponse(QNetworkReply* reply) {
                 ui->logo->setPixmap(pic.scaled(ui->logo->width(), ui->logo->height(), Qt::KeepAspectRatio));
             } else {
                 QPixmap unavailable( ":/remote/unavailable.png" );
-                ui->logo->setPixmap(unavailable.scaled(ui->logo->width(), ui->logo->height(), Qt::KeepAspectRatio));
+                ui->logo->setPixmap(unavailable);
             }
         } else if (req == "setInfoLogo") {
             QPixmap pic;
@@ -625,7 +634,7 @@ void RemoteDeviceConfig::connectionResponse(QNetworkReply* reply) {
                 ui->infoLogo->setPixmap(pic.scaled(ui->infoLogo->width(), ui->infoLogo->height(), Qt::KeepAspectRatio));
             } else {
                 QPixmap unavailable( ":/remote/unavailable.png" );
-                ui->infoLogo->setPixmap(unavailable.scaled(ui->infoLogo->width(), ui->infoLogo->height(), Qt::KeepAspectRatio));
+                ui->infoLogo->setPixmap(unavailable);
             }
         } else if (req == "setMethod") {
             QPixmap pic;
@@ -635,7 +644,7 @@ void RemoteDeviceConfig::connectionResponse(QNetworkReply* reply) {
                 ui->methodImg->setPixmap(pic.scaled(ui->methodImg->width(), ui->methodImg->height(), Qt::KeepAspectRatio));
             } else {
                 QPixmap unavailable( ":/remote/unavailable.png" );
-                ui->methodImg->setPixmap(unavailable.scaled(ui->methodImg->width(), ui->methodImg->height(), Qt::KeepAspectRatio));
+                ui->methodImg->setPixmap(unavailable);
             }
         }
     }
@@ -682,15 +691,15 @@ void RemoteDeviceConfig::updateServiceInfo(QString str) {
         QPixmap unavailable( ":/remote/unavailable.png" );
         QPixmap searching( ":/remote/searching.png" );
 
-        ui->logo->setPixmap(unavailable.scaled(ui->logo->width(), ui->logo->height(), Qt::KeepAspectRatio));
+        ui->logo->setPixmap(unavailable);
         ui->status->setPixmap(searching.scaled(ui->status->width(), ui->status->height(), Qt::KeepAspectRatio));
         ui->deviceSelector->clear();
-        ui->statusLabel->setText("Searching...");
+        ui->statusLabel->setText("...");
         ui->lcdTotal->display(0);
         ui->lcdAmount->display(0);
     } else {
         QMessageBox messageBox;
-        messageBox.critical(0,"Error","There are not available services");
+        messageBox.critical(0,"Error","Any available services could be found");
         messageBox.setFixedSize(500,200);
         this->close();
     }
@@ -709,11 +718,11 @@ void RemoteDeviceConfig::onTryToConnect() {
 
     if (MAJOR_REMOTE_VERSION < majorVersion) {
         QMessageBox messageBox;
-        messageBox.critical(0,"Version mismatch","It seems your version is currently outdated, the version required for this domain is (" + versionStr + ")");
+        messageBox.critical(0,"Version mismatch","It seems your version is currently outdated, the version required for this domain is (" + versionStr + "). Please download the newest version.");
         return;
     } else if (MAJOR_REMOTE_VERSION > majorVersion) {
         QMessageBox messageBox;
-        messageBox.critical(0,"Version mismatch","It seems that the domain is using an outdated version, please contact the administrator");
+        messageBox.critical(0,"Version mismatch","It seems that the domain is using an outdated version, please contact the administrator.");
         return;
     }
 
