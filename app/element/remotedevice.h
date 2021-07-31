@@ -79,7 +79,7 @@ class RemoteDevice : public GraphicElement {
   uint8_t methodId;
   uint16_t deviceId;
   uint16_t latency;
-  uint64_t minWaitTime;
+  uint32_t minWaitTime;
   uint64_t afterTimeStartedEpoch;
   uint64_t aliveSince;
   uint64_t allowUntil;
@@ -141,6 +141,12 @@ public:
       afterTimeStartedEpoch = 0;
       startedTimeEpoch = 0;
 
+      inQueue = false;
+      queuePos = 0;
+      deviceAllowedTime = 0;
+      queueWaitingSinceEpoch = 0;
+      queueEstimatedEpoch = 0;
+
       connected = false;
 
       update();
@@ -185,9 +191,9 @@ public:
       allowUntil = epochInSeconds;
   }
 
-  uint64_t getMinWaitTime() const { return minWaitTime; }
-  void setMinWaitTime(uint64_t epochInSeconds) {
-      minWaitTime = epochInSeconds;
+  uint32_t getMinWaitTime() const { return minWaitTime; }
+  void setMinWaitTime(uint32_t minWaitTimeInSeconds) {
+      minWaitTime = minWaitTimeInSeconds;
   }
 
   long getTimeAllowed() const { return timeAllowed; }

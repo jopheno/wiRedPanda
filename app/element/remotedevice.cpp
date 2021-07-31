@@ -67,7 +67,7 @@ RemoteDevice::RemoteDevice( QGraphicsItem *parent ) : GraphicElement( 0, 55, 0, 
   queueWaitingSinceEpoch = 0;
   queueEstimatedEpoch = 0;
 
-  connected = 0;
+  connected = false;
 
   // Try loading remote lab settings
   QDomDocument xml;

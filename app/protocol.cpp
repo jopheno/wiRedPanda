@@ -210,6 +210,7 @@ void RemoteProtocol::parse_time_warning(RemoteDevice* elm, NetworkIncomingMessag
     msgBox->raise();
 }
 
+// TODO: Needs to update minWaitTime (it's on default state, minWaitTime = 0)
 void RemoteProtocol::parse_queue_info(RemoteDevice* elm, NetworkIncomingMessage& imsg) {
     COMMENT("QUEUE INFO", 0);
 
@@ -235,8 +236,9 @@ void RemoteProtocol::parse_queue_info(RemoteDevice* elm, NetworkIncomingMessage&
         // the estimated time shall only decrease, never increase.
         if (elm->getQueueEstimatedEpoch() > estimatedEpoch)
             elm->setQueueEstimatedEpoch(estimatedEpoch);
-        // if time is increasing more than 25 seconds, update.
-        else if(static_cast<int>(estimatedEpoch-elm->getQueueEstimatedEpoch()) > 25)
+        // if time is increasing more than the minimim wait time in seconds
+        // (plus 20 seconds from connect/disconnect required time and clock diferences), then update.
+        else if(static_cast<int>(estimatedEpoch-elm->getQueueEstimatedEpoch()) > static_cast<int>(elm->getMinWaitTime() + 20))
             elm->setQueueEstimatedEpoch(estimatedEpoch);
     }
 }
