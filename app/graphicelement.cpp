@@ -854,6 +854,11 @@ void GraphicElement::setBottomPosition(int bottomPosition)
     updatePorts();
 }
 
+void GraphicElement::setHasCustomConfig(bool hasCustomConfig)
+{
+    m_hasCustomConfig = hasCustomConfig;
+}
+
 int GraphicElement::topPosition() const
 {
     return m_topPosition;

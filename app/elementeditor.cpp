@@ -96,6 +96,7 @@ void ElementEditor::contextMenu(QPoint screenPos)
     QString revertSkinText(tr("Set skin to default"));
     QString triggerActionText(tr("Change trigger"));
     QString morphMenuText(tr("Morph to..."));
+    QString remoteConfigMenuText( tr( "Config" ) );
     if (m_hasLabel) {
         menu.addAction(QIcon(QPixmap(":/toolbar/rename.png")), renameActionText)->setData(renameActionText);
     }
@@ -169,6 +170,7 @@ void ElementEditor::contextMenu(QPoint screenPos)
         case ElementGroup::IC:
         case ElementGroup::MUX:
         case ElementGroup::OTHER:
+        case ElementGroup::REMOTE:
         case ElementGroup::UNKNOWN:
             break;
         }
@@ -176,7 +178,14 @@ void ElementEditor::contextMenu(QPoint screenPos)
             menu.removeAction(submenumorph->menuAction());
         }
     }
+
+    if ( m_hasCustomConfig ) {
+      QAction *remoteConfigAction = menu.addAction( remoteConfigMenuText );
+      connect( remoteConfigAction, &QAction::triggered, m_editor, &Editor::openConfigAction );
+    }
+
     menu.addSeparator();
+
     if (m_hasElements) {
         QAction *copyAction = menu.addAction(QIcon(QPixmap(":/toolbar/copy.png")), tr("Copy"));
         QAction *cutAction = menu.addAction(QIcon(QPixmap(":/toolbar/cut.png")), tr("Cut"));

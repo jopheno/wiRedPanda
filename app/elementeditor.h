@@ -69,7 +69,7 @@ private:
     QVector<GraphicElement *> m_elements;
     Scene *m_scene;
     Editor *m_editor;
-    bool m_hasAnyProperty, m_hasLabel, m_hasColors, m_hasFrequency, m_hasAudio;
+    bool m_hasAnyProperty, m_hasLabel, m_hasColors, m_hasFrequency, m_hasAudio, m_hasCustomConfig;
     bool m_canChangeInputSize, m_canChangeOutputSize;
     bool m_hasTrigger, m_hasRotation, m_canChangeSkin;
     bool m_hasSameLabel, m_hasSameColors, m_hasSameFrequency;

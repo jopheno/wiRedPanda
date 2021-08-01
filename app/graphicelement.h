@@ -12,7 +12,7 @@
 #include "elementtype.h"
 #include "itemwithid.h"
 
-enum class ElementGroup : uint_fast8_t { UNKNOWN, OTHER, IC, INPUT, GATE, MEMORY, OUTPUT, MUX, STATICINPUT };
+enum class ElementGroup : uint_fast8_t { UNKNOWN, OTHER, IC, INPUT, GATE, MEMORY, OUTPUT, MUX, STATICINPUT, REMOTE };
 
 #define MAXIMUMVALIDINPUTSIZE 256
 
@@ -37,6 +37,7 @@ public:
     enum : uint32_t { Type = QGraphicsItem::UserType + 3 };
 
     GraphicElement(ElementType type, ElementGroup group, int minInputSz, int maxInputSz, int minOutputSz, int maxOutputSz, QGraphicsItem *parent = nullptr);
+    ~GraphicElement() { if (m_customPixmap) delete m_pixmap;}
 
     /* GraphicElement interface. */
     ElementType elementType() const;
@@ -148,6 +149,8 @@ public:
 
     bool hasAudio() const;
 
+    bool hasCustomConfig( ) const;
+
     virtual void setColor(const QString &color);
     virtual QString getColor() const;
 
@@ -205,7 +208,9 @@ private:
     bool m_hasColors;
     bool m_hasTrigger;
     bool m_hasAudio;
+    bool m_hasCustomConfig;
     bool m_disabled;
+    bool m_customPixmap;
     ElementType m_elementType;
     ElementGroup m_elementGroup;
     QString m_labelText;
@@ -250,6 +255,7 @@ protected:
     void setMaxInputSz(int maxInputSz);
     void setTopPosition(int topPosition);
     void setBottomPosition(int bottomPosition);
+    void setHasCustomConfig( bool hasCustomConfig );
 
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
     bool m_usingDefaultSkin;
