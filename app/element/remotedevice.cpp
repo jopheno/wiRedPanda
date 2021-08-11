@@ -140,8 +140,8 @@ bool RemoteDevice::connectTo(const std::string& host, int port, const std::strin
     socket.connectToHost(QString::fromStdString(host), port);
     if (socket.waitForConnected(5000)) {
         NetworkOutgoingMessage msg(1);
-        msg.addByte<uint8_t>(deviceTypeId);
-        msg.addByte<uint8_t>(methodId);
+        msg.addByte<quint8>(deviceTypeId);
+        msg.addByte<quint8>(methodId);
         msg.addString(QString::fromStdString(token));
         msg.addSize();
 
