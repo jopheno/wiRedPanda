@@ -263,7 +263,7 @@ NetworkOutgoingMessage RemoteProtocol::sendPing() {
     NetworkOutgoingMessage msg(2);
 
     uint64_t timestamp = QDateTime::currentMSecsSinceEpoch();
-    msg.addByte<uint64_t>(timestamp);
+    msg.addByte<quint64>(timestamp);
     msg.addSize();
 
     return msg;
@@ -272,12 +272,12 @@ NetworkOutgoingMessage RemoteProtocol::sendPing() {
 NetworkOutgoingMessage RemoteProtocol::sendIOInfo(uint16_t latency, const std::list<Pin>& mappedPins) {
     NetworkOutgoingMessage msg(3);
 
-    msg.addByte<uint16_t>(latency);
-    msg.addByte<uint16_t>(mappedPins.size());
+    msg.addByte<quint16>(latency);
+    msg.addByte<quint16>(mappedPins.size());
 
     for ( const Pin& pin : mappedPins) {
-        msg.addByte<uint32_t>(pin.getId());
-        msg.addByte<uint8_t>(pin.getType());
+        msg.addByte<quint32>(pin.getId());
+        msg.addByte<quint8>(pin.getType());
     }
 
     msg.addSize();
@@ -287,8 +287,8 @@ NetworkOutgoingMessage RemoteProtocol::sendIOInfo(uint16_t latency, const std::l
 
 NetworkOutgoingMessage RemoteProtocol::sendUpdateInput(uint32_t id, uint8_t value) {
     NetworkOutgoingMessage msg(4);
-    msg.addByte<uint32_t>(id);
-    msg.addByte<uint8_t>(value);
+    msg.addByte<quint32>(id);
+    msg.addByte<quint8>(value);
 
     msg.addSize();
 
@@ -300,8 +300,8 @@ NetworkOutgoingMessage RemoteProtocol::sendRequestToWaitOnQueue(RemoteDevice* re
     std::cout << "sendRequestToWaitOnQueue" << std::endl;
     NetworkOutgoingMessage msg(5);
     msg.addString(token);
-    msg.addByte<uint8_t>(remoteDevice->getDeviceTypeId());
-    msg.addByte<uint8_t>(remoteDevice->getDeviceMethodId());
+    msg.addByte<quint8>(remoteDevice->getDeviceTypeId());
+    msg.addByte<quint8>(remoteDevice->getDeviceMethodId());
     msg.addSize();
 
     return msg;

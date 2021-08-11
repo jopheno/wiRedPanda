@@ -11,7 +11,7 @@
 class NetworkOutgoingMessage : public QByteArray {
     uint8_t opcode;
 public:
-    NetworkOutgoingMessage(uint8_t opcode) : opcode(opcode) { addByte<uint8_t>(opcode); }
+    NetworkOutgoingMessage(uint8_t opcode) : opcode(opcode) { addByte<quint8>(opcode); }
 
     template<class T>
     void addByte(T data) {
@@ -24,7 +24,7 @@ public:
     }
 
     void addString(QString str) {
-        addByte<uint16_t>(str.size());
+        addByte<quint16>(str.size());
         QByteArray inUtf8 = str.toUtf8();
         append(inUtf8);
     }
