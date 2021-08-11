@@ -27,11 +27,11 @@ void RemoteProtocol::init(QWidget *parent) {
 
 void RemoteProtocol::parse_session_start(RemoteDevice* elm, NetworkIncomingMessage& imsg) {
     QString token = imsg.popString();
-    uint16_t device_id = imsg.pop<uint16_t>();
+    uint16_t device_id = imsg.pop<quint16>();
 
     // error occured
     if (device_id == 0) {
-        uint8_t errorCode = imsg.pop<uint8_t>();
+        uint8_t errorCode = imsg.pop<quint8>();
         QString errorMsg = imsg.popString();
 
         switch (errorCode) {
@@ -72,9 +72,9 @@ void RemoteProtocol::parse_session_start(RemoteDevice* elm, NetworkIncomingMessa
     QString method = imsg.popString();
     QString device_name = imsg.popString();
     QString device_token = imsg.popString();
-    uint32_t min_wait_time = imsg.pop<uint32_t>();
-    uint64_t allow_until = imsg.pop<uint64_t>();
-    uint16_t pin_amount = imsg.pop<uint16_t>();
+    uint32_t min_wait_time = imsg.pop<quint32>();
+    uint64_t allow_until = imsg.pop<quint64>();
+    uint16_t pin_amount = imsg.pop<quint16>();
 
     bool alreadyLoaded = false;
     if (elm->getAvailablePins().size() > 0)
@@ -83,9 +83,9 @@ void RemoteProtocol::parse_session_start(RemoteDevice* elm, NetworkIncomingMessa
     bool portMappingReseted = false;
 
     for (int i = 0; i<pin_amount; i++) {
-        uint32_t id = imsg.pop<uint32_t>();
+        uint32_t id = imsg.pop<quint32>();
         QString pinName = imsg.popString();
-        uint8_t type = imsg.pop<uint8_t>();
+        uint8_t type = imsg.pop<quint8>();
 
         std::cerr << "> pin " << i << ": " << static_cast<int>(id) << ", " << pinName.toStdString() << ", " << static_cast<int>(type) << std::endl;
 
@@ -151,7 +151,7 @@ void RemoteProtocol::parse_session_start(RemoteDevice* elm, NetworkIncomingMessa
 void RemoteProtocol::parse_pong(RemoteDevice* elm, NetworkIncomingMessage& imsg) {
     std::cout << "PONG" << std::endl;
 
-    uint64_t timestamp = imsg.pop<uint64_t>();
+    uint64_t timestamp = imsg.pop<quint64>();
 
     uint64_t current = QDateTime::currentMSecsSinceEpoch();
 
@@ -161,15 +161,15 @@ void RemoteProtocol::parse_pong(RemoteDevice* elm, NetworkIncomingMessage& imsg)
 
 void RemoteProtocol::parse_output(RemoteDevice* elm, NetworkIncomingMessage& imsg) {
     std::cout << "OUTPUT" << std::endl;
-    uint32_t pinId = imsg.pop<uint32_t>();
-    uint8_t value = imsg.pop<uint8_t>();
+    uint32_t pinId = imsg.pop<quint32>();
+    uint8_t value = imsg.pop<quint8>();
 
     elm->setOutput(pinId, value == 0 ? false : true);
 }
 
 void RemoteProtocol::parse_time_warning(RemoteDevice* elm, NetworkIncomingMessage& imsg) {
     std::cout << "TIME WARNING" << std::endl;
-    uint8_t isWarning = imsg.pop<uint8_t>();
+    uint8_t isWarning = imsg.pop<quint8>();
 
     // the second time the connection is disconnected
     if (isWarning == 0) {
@@ -190,7 +190,7 @@ void RemoteProtocol::parse_time_warning(RemoteDevice* elm, NetworkIncomingMessag
         return;
     }
 
-    uint64_t afterTimeStartedEpoch = imsg.pop<uint64_t>();
+    uint64_t afterTimeStartedEpoch = imsg.pop<quint64>();
 
     QString time;
     if (elm->getMinWaitTime() > 60) {
@@ -217,11 +217,11 @@ void RemoteProtocol::parse_queue_info(RemoteDevice* elm, NetworkIncomingMessage&
     QString userToken = imsg.popString();
 
     // user amount - not in use
-    imsg.pop<uint8_t>();
+    imsg.pop<quint8>();
 
-    uint8_t currPos = imsg.pop<uint8_t>();
-    uint32_t allowedTimeInSeconds = imsg.pop<uint32_t>();
-    uint64_t estimatedEpoch = imsg.pop<uint64_t>();
+    uint8_t currPos = imsg.pop<quint8>();
+    uint32_t allowedTimeInSeconds = imsg.pop<quint32>();
+    uint64_t estimatedEpoch = imsg.pop<quint64>();
 
     if (!elm->isInQueue()) {
         elm->setIsInQueue(true);
