@@ -49,6 +49,12 @@ public:
     uint8_t getOpcode() { return opcode; }
 };
 
+template <class T>
+T popFromDataStream(QDataStream& stream, uint32_t& remainingBytes) { T ret; stream >> ret; remainingBytes-=sizeof(T); return ret; }
+
+// Required on some Linux distributions
+template <long unsigned int> long unsigned int popFromDataStream(QDataStream& stream, uint32_t& remainingBytes) { quint32 ret; stream >> ret; remainingBytes-=sizeof(long unsigned int); return static_cast<long unsigned int>(ret); }
+
 class NetworkIncomingMessage {
     uint8_t opcode;
     QDataStream stream;
@@ -59,7 +65,8 @@ public:
     NetworkIncomingMessage(uint8_t opcode, QByteArray byteArray) : opcode(opcode), stream(byteArray), size(byteArray.size()), remainingBytes(size) {}
 
     template <class T>
-    T pop() { T ret; stream >> ret; remainingBytes-=sizeof(T); return ret; }
+    T pop() { T ret = popFromDataStream<T>(stream, remainingBytes); return ret; }
+
     QString popString() {
         uint16_t size = pop<uint16_t>();
 
@@ -76,6 +83,5 @@ public:
     uint8_t getOpcode() { return opcode; }
     uint32_t getRemainingBytes() { return remainingBytes; }
 };
-
 
 #endif // NETWORK_H
