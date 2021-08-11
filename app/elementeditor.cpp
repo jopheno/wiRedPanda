@@ -55,6 +55,7 @@ ElementEditor::ElementEditor(QWidget *parent)
     connect(m_ui->lineEditTrigger, &QLineEdit::textChanged,                 this, &ElementEditor::triggerChanged);
     connect(m_ui->pushButtonChangeSkin, &QPushButton::clicked,              this, &ElementEditor::updateElementSkin);
     connect(m_ui->pushButtonDefaultSkin, &QPushButton::clicked,             this, &ElementEditor::defaultSkin);
+    connect(m_ui->pushButtonCustomConfig, &QPushButton::clicked,             this, &ElementEditor::openCustomConfig);
 
     connect(m_ui->comboBoxColor, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &ElementEditor::apply);
     connect(m_ui->comboBoxAudio, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &ElementEditor::apply);
@@ -307,8 +308,10 @@ void ElementEditor::setCurrentElements(const QVector<GraphicElement *> &elms)
         m_hasSameAudio = true;
         m_hasSameType = true;
         m_hasElements = true;
+        m_hasCustomConfig = true;
         GraphicElement *firstElement = m_elements.front();
         ElementType element_type = firstElement->elementType();
+        bool hasRemoteElement = false;
         for (GraphicElement *elm : qAsConst(m_elements)) {
             if (elm->elementType() != firstElement->elementType()) {
                 element_type = ElementType::UNKNOWN;
@@ -346,9 +349,14 @@ void ElementEditor::setCurrentElements(const QVector<GraphicElement *> &elms)
             sameElementGroup |= (elm->elementGroup() == ElementGroup::STATICINPUT && firstElement->elementGroup() == ElementGroup::INPUT);
             m_hasOnlyInputs &= elm->elementGroup() == ElementGroup::INPUT;
             m_canMorph &= sameElementGroup;
+            hasRemoteElement |= elm->elementGroup() == ElementGroup::REMOTE;
+
+            /* Custom config will appear only if a single object is selected */
+            m_hasCustomConfig &= elm->hasCustomConfig();
+            m_hasCustomConfig &= m_elements.size() == 1;
         }
-        m_canChangeInputSize = (minimum_inputs < maximum_inputs);
-        m_canChangeOutputSize = (minimum_outputs < maximum_outputs);
+        m_canChangeInputSize = (minimum_inputs < maximum_inputs && !hasRemoteElement);
+        m_canChangeOutputSize = (minimum_outputs < maximum_outputs && !hasRemoteElement);
         /* Element type */
         m_ui->label_type->setText(ElementFactory::typeToTitleText(element_type));
         /* Labels */
@@ -500,6 +508,10 @@ void ElementEditor::setCurrentElements(const QVector<GraphicElement *> &elms)
                 m_ui->lineEditTrigger->setText(m_manyTriggers);
             }
         }
+
+        /* Configuration button */
+        m_ui->pushButtonCustomConfig->setVisible( m_hasCustomConfig );
+
         setEnabled(true);
         setVisible(true);
         /* Skin */
@@ -682,4 +694,9 @@ void ElementEditor::defaultSkin()
     m_updatingSkin = true;
     m_defaultSkin = true;
     apply();
+}
+
+void ElementEditor::openCustomConfig()
+{
+    m_editor->openConfigAction();
 }

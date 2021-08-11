@@ -59,6 +59,7 @@ private slots:
     void inputLocked(const bool value);
     void triggerChanged(const QString &arg1);
     void defaultSkin();
+    void openCustomConfig();
 
 private:
     void setCurrentElements(const QVector<GraphicElement *> &element);
