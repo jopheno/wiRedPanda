@@ -37,7 +37,7 @@ public:
     enum : uint32_t { Type = QGraphicsItem::UserType + 3 };
 
     GraphicElement(ElementType type, ElementGroup group, int minInputSz, int maxInputSz, int minOutputSz, int maxOutputSz, QGraphicsItem *parent = nullptr);
-    ~GraphicElement() { if (m_customPixmap) delete m_pixmap;}
+    ~GraphicElement() {}
 
     /* GraphicElement interface. */
     ElementType elementType() const;
@@ -210,7 +210,6 @@ private:
     bool m_hasAudio;
     bool m_hasCustomConfig;
     bool m_disabled;
-    bool m_customPixmap;
     ElementType m_elementType;
     ElementGroup m_elementGroup;
     QString m_labelText;
