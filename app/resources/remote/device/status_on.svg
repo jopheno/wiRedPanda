@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -0.5 192 128" shape-rendering="crispEdges">
+<path stroke="#494949" d="M24 88h2M24 89h2" />
+<path stroke="#424242" d="M26 88h4M26 89h4M22 90h2M22 91h2M22 98h2M22 99h2" />
+<path stroke="rgba(68,118,34,0.8274509803921568)" d="M24 90h2M24 91h2" />
+<path stroke="rgba(61,119,30,0.803921568627451)" d="M26 90h4M26 91h4" />
+<path stroke="#313131" d="M30 90h2M30 91h2M24 100h2M24 101h2" />
+<path stroke="#3a3a3a" d="M20 92h2M20 93h2M20 94h2M20 95h2M20 96h2M20 97h2" />
+<path stroke="rgba(67,115,40,0.7764705882352941)" d="M22 92h2M22 93h2" />
+<path stroke="rgba(63,134,23,0.7490196078431373)" d="M24 92h2M24 93h2" />
+<path stroke="rgba(62,133,23,0.9019607843137255)" d="M26 92h2M26 93h2" />
+<path stroke="rgba(60,128,24,0.9137254901960784)" d="M28 92h2M28 93h2" />
+<path stroke="rgba(51,105,23,0.7490196078431373)" d="M30 92h2M30 93h2" />
+<path stroke="#1c1c1c" d="M32 92h2M32 93h2M26 100h4M26 101h4" />
+<path stroke="rgba(66,126,30,0.7764705882352941)" d="M22 94h2M22 95h2M22 96h2M22 97h2" />
+<path stroke="rgba(68,132,28,0.8274509803921568)" d="M24 94h2M24 95h2" />
+<path stroke="rgba(66,123,33,0.9725490196078431)" d="M26 94h2M26 95h2" />
+<path stroke="rgba(62,121,32,0.9607843137254902)" d="M28 94h2M28 95h2" />
+<path stroke="rgba(47,94,22,0.8274509803921568)" d="M30 94h2M30 95h2M30 96h2M30 97h2" />
+<path stroke="#0f0f0f" d="M32 94h2M32 95h2M32 96h2M32 97h2" />
+<path stroke="rgba(62,129,26,0.7764705882352941)" d="M24 96h2M24 97h2" />
+<path stroke="rgba(61,116,30,0.9529411764705882)" d="M26 96h2M26 97h2" />
+<path stroke="rgba(59,116,31,0.9450980392156862)" d="M28 96h2M28 97h2" />
+<path stroke="rgba(48,94,19,0.5882352941176471)" d="M24 98h2M24 99h2" />
+<path stroke="rgba(46,84,21,0.6784313725490196)" d="M26 98h4M26 99h4" />
+<path stroke="#272727" d="M30 98h2M30 99h2" />
+</svg>

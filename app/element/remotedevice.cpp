@@ -331,7 +331,7 @@ void RemoteDevice::setupPorts()
 
 void RemoteDevice::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
-
+    // TODO: fix multi-layer render not working for SVG files
     QPixmap status_on(":/remote/device/status_on.png");
     QPixmap status_off(":/remote/device/status_off.png");
 
