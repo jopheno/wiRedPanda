@@ -5,6 +5,7 @@
 #include "common.h"
 #include "globalproperties.h"
 #include "mainwindow.h"
+#include "protocol.h"
 
 #include <QCommandLineParser>
 #include <QMessageBox>
@@ -108,6 +109,9 @@ int main(int argc, char *argv[])
         auto *window = new MainWindow();
         app.setMainWindow(window);
         window->show();
+
+        // Initialize TCP Network Protocol
+        RemoteProtocol::init(window);
 
         if (!args.empty()) {
             window->loadPandaFile(args.at(0));

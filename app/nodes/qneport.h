@@ -69,6 +69,8 @@ public:
     void setName(const QString &name);
     void setPtr(const quint64 ptr);
     void setRequired(const bool required);
+    void setRemoteId(int id) { m_remoteId = id; }
+    int getRemoteId() { return m_remoteId; }
     void updateConnections();
 
 protected:
@@ -87,6 +89,7 @@ protected:
     int m_margin = 2;
     int m_portFlags = 0; // change this to std::bitset?
     int m_radius = 5;
+    int m_remoteId = 0;
     quint64 m_ptr = 0;
 };
 

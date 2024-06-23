@@ -49,6 +49,7 @@ private:
     void triggerChanged(const QString &cmd);
     void priorityChanged(const int value);
     void updateSkins();
+    void openCustomConfig();
 
     Ui::ElementEditor *m_ui;
     QList<GraphicElement *> m_elements;
@@ -88,4 +89,5 @@ private:
     bool m_hasTrigger = false;
     bool m_isDefaultSkin = true;
     bool m_isUpdatingSkin = false;
+    bool m_hasCustomConfig = false;
 };

@@ -56,6 +56,7 @@ public:
     void showGates(const bool checked);
     void showWires(const bool checked);
     void updateTheme();
+    void openConfigAction();
 
 signals:
     void circuitHasChanged();

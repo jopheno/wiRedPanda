@@ -7,6 +7,7 @@
 #include <QMainWindow>
 #include <QSpacerItem>
 #include <QTranslator>
+#include <QDomDocument>
 
 class ElementLabel;
 class RecentFiles;
@@ -65,6 +66,7 @@ public:
     void retranslateUi();
     void setDolphinFileName(const QString &fileName);
     void setFastMode(const bool fastMode);
+    QDomDocument* loadRemoteFunctions();
 
 signals:
     void addRecentFile(const QString &fileName);
@@ -111,6 +113,7 @@ private:
     void on_actionSave_triggered();
     void on_actionSelectAll_triggered();
     void on_actionWaveform_triggered();
+    void on_actionGamefication_triggered();
     void on_actionWires_triggered(const bool checked);
     void on_actionZoomIn_triggered() const;
     void on_actionZoomOut_triggered() const;

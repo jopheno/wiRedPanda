@@ -19,6 +19,7 @@
 #include "simulationblocker.h"
 #include "thememanager.h"
 #include "workspace.h"
+#include "remotedeviceconfig.h"
 
 #include <QActionGroup>
 #include <QCheckBox>
@@ -442,12 +443,18 @@ void MainWindow::on_actionSaveAs_triggered()
 
 void MainWindow::on_actionAbout_triggered()
 {
+    QString remoteVersion("");
+
+    remoteVersion = "<p>Remote version: %1</p>";
+    remoteVersion = remoteVersion.arg(RemoteDeviceConfig::version());
+
     QMessageBox::about(
         this,
         "WiRedPanda",
         tr("<p>WiRedPanda is a software developed by the students of the Federal University of São Paulo."
            " This project was created in order to help students learn about logic circuits.</p>"
            "<p>Software version: %1</p>"
+           "%2"
            "<p><strong>Creators:</strong></p>"
            "<ul>"
            "<li> Davi Morales </li>"
@@ -458,7 +465,7 @@ void MainWindow::on_actionAbout_triggered()
            "<p> WiRedPanda is currently maintained by Prof. Fábio Cappabianco, Ph.D. and Vinícius R. Miguel.</p>"
            "<p> Please file a report at our GitHub page if bugs are found or if you wish for a new functionality to be implemented.</p>"
            "<p><a href=\"http://gibis-unifesp.github.io/wiRedPanda/\">Visit our website!</a></p>")
-            .arg(QApplication::applicationVersion()));
+            .arg(QApplication::applicationVersion(), remoteVersion));
 }
 
 void MainWindow::on_actionAboutQt_triggered()
@@ -1172,10 +1179,27 @@ void MainWindow::populateMenu(QSpacerItem *spacer, const QStringList &names, QLa
 void MainWindow::populateLeftMenu()
 {
     m_ui->tabElements->setCurrentIndex(0);
-    populateMenu(m_ui->verticalSpacer_InOut, {"InputVcc", "InputGnd", "InputButton", "InputSwitch", "InputRotary", "Clock", "Led", "Display7", "Display14", "Buzzer"}, m_ui->scrollAreaWidgetContents_InOut->layout());
-    populateMenu(m_ui->verticalSpacer_Gates, {"And", "Or", "Not", "Nand", "Nor", "Xor", "Xnor", "Mux", "Demux", "Node"}, m_ui->scrollAreaWidgetContents_Gates->layout());
-    populateMenu(m_ui->verticalSpacer_Memory, {"DLatch", "DFlipFlop", "JKFlipFlop", "SRFlipFlop", "TFlipFlop"}, m_ui->scrollAreaWidgetContents_Memory->layout());
-    populateMenu(m_ui->verticalSpacer_Misc, {"Text", "Line"}, m_ui->scrollAreaWidgetContents_Misc->layout());
+    QStringList inOutElements = {"InputVcc", "InputGnd", "InputButton", "InputSwitch", "InputRotary", "Clock", "Led", "Display7", "Display14", "Buzzer"};
+    QStringList gatesElements = {"And", "Or", "Not", "Nand", "Nor", "Xor", "Xnor", "Mux", "Demux", "Node"};
+    QStringList memoryElements = {"DLatch", "DFlipFlop", "JKFlipFlop", "SRFlipFlop", "TFlipFlop"};
+    QStringList miscElements = {"Text", "Line"};
+
+    // lets try loading the remote lab functions
+    // if it is possible, we add the Remote element
+    // to the left menu
+    QDomDocument* xml = loadRemoteFunctions();
+    if (xml != nullptr) {
+        if ( RemoteDevice::loadSettings(*xml) ) {
+            inOutElements.push_back("RemoteDevice");
+        }
+
+        delete xml;
+    }
+
+    populateMenu(m_ui->verticalSpacer_InOut, inOutElements, m_ui->scrollAreaWidgetContents_InOut->layout());
+    populateMenu(m_ui->verticalSpacer_Gates, gatesElements, m_ui->scrollAreaWidgetContents_Gates->layout());
+    populateMenu(m_ui->verticalSpacer_Memory, memoryElements, m_ui->scrollAreaWidgetContents_Memory->layout());
+    populateMenu(m_ui->verticalSpacer_Misc, miscElements, m_ui->scrollAreaWidgetContents_Misc->layout());
 }
 
 void MainWindow::on_actionFastMode_triggered(const bool checked)
@@ -1366,4 +1390,24 @@ void MainWindow::removeICFile(const QString &icFileName)
 
     updateICList();
     on_actionSave_triggered();
+}
+
+QDomDocument* MainWindow::loadRemoteFunctions() {
+    // Try loading remote lab settings
+    QDomDocument* xml = new QDomDocument();
+    // Load xml file as raw data
+
+    QFile f("remotelab.xml");
+    if (!f.open(QIODevice::ReadOnly ))
+    {
+      // Error while loading file
+      // Remote functionalities will be disabled
+      return nullptr;
+    }
+
+    // Set data into the QDomDocument before processing
+    xml->setContent(&f);
+    f.close();
+
+    return xml;
 }

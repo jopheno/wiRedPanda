@@ -38,6 +38,7 @@ public:
         Nor = 8,
         Not = 4,
         Or = 6,
+        RemoteDevice = 30,
         SRFlipFlop = 19,
         TFlipFlop = 20,
         Text = 28,
@@ -56,6 +57,7 @@ public:
         Other = 1,
         Output = 6,
         StaticInput = 8,
+        Remote = 9,
         Unknown = 0,
     };
     Q_ENUM(ElementGroup)

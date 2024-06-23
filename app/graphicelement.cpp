@@ -73,6 +73,13 @@ GraphicElement::GraphicElement(ElementType type, ElementGroup group, const QStri
     setCacheMode(QGraphicsItem::DeviceCoordinateCache);
 }
 
+GraphicElement::~GraphicElement()
+{
+    if (m_customPixmap) {
+        m_pixmap = nullptr;
+    }
+}
+
 ElementType GraphicElement::elementType() const
 {
     return m_elementType;
@@ -912,6 +919,11 @@ bool GraphicElement::hasColors() const
 bool GraphicElement::hasTrigger() const
 {
     return m_hasTrigger;
+}
+
+bool GraphicElement::hasCustomConfig() const
+{
+    return false;
 }
 
 void GraphicElement::setColor(const QString &color)

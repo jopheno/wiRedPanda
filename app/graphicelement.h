@@ -39,6 +39,7 @@ public:
                             const int minInputSize, const int maxInputSize, const int minOutputSize, const int maxOutputSize, QGraphicsItem *parent = nullptr);
     explicit GraphicElement(QGraphicsItem *parent = nullptr) : QGraphicsObject(parent) {}
     GraphicElement(const GraphicElement &other) : GraphicElement(other.parentItem()) {}
+    ~GraphicElement();
 
     //! Saves the graphic element through a binary data stream.
     virtual void save(QDataStream &stream) const;
@@ -73,6 +74,7 @@ public:
     bool hasFrequency() const;
     bool hasLabel() const;
     bool hasTrigger() const;
+    virtual bool hasCustomConfig() const;
     bool isRotatable() const;
     bool isValid();
     const QVector<QNEInputPort *> &inputs() const;
@@ -196,6 +198,7 @@ private:
     bool m_hasTrigger = false;
     bool m_rotatable = true;
     bool m_selected = false;
+    bool m_customPixmap = false;
     qreal m_angle = 0;
     quint64 m_maxInputSize = 0;
     quint64 m_maxOutputSize = 0;

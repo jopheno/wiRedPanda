@@ -51,6 +51,7 @@ ElementEditor::ElementEditor(QWidget *parent)
     connect(m_ui->pushButtonChangeSkin,   &QPushButton::clicked,                            this, &ElementEditor::updateElementSkin);
     connect(m_ui->pushButtonDefaultSkin,  &QPushButton::clicked,                            this, &ElementEditor::defaultSkin);
     connect(m_ui->spinBoxPriority,        qOverload<int>(&QSpinBox::valueChanged),          this, &ElementEditor::priorityChanged);
+    connect(m_ui->pushButtonCustomConfig, &QPushButton::clicked,                            this, &ElementEditor::openCustomConfig);
 }
 
 ElementEditor::~ElementEditor()
@@ -82,6 +83,7 @@ void ElementEditor::contextMenu(QPoint screenPos, QGraphicsItem *itemAtMouse)
     QString rotateLeftText(tr("Rotate left"));
     QString rotateRightText(tr("Rotate right"));
     QString triggerText(tr("Change trigger"));
+    QString remoteConfigMenuText(tr("Config"));
 
     menu.addAction(priorityText)->setData(priorityText);
 
@@ -185,12 +187,18 @@ void ElementEditor::contextMenu(QPoint screenPos, QGraphicsItem *itemAtMouse)
         case ElementGroup::IC:      [[fallthrough]];
         case ElementGroup::Mux:     [[fallthrough]];
         case ElementGroup::Other:   [[fallthrough]];
+        case ElementGroup::Remote:   [[fallthrough]];
         case ElementGroup::Unknown: break;
         }
 
         if (submenuMorph->actions().empty()) {
             menu.removeAction(submenuMorph->menuAction());
         }
+    }
+
+    if ( m_hasCustomConfig ) {
+        QAction *remoteConfigAction = menu.addAction( remoteConfigMenuText );
+        connect( remoteConfigAction, &QAction::triggered, m_scene, &Scene::openConfigAction );
     }
 
     menu.addSeparator();
@@ -378,6 +386,7 @@ void ElementEditor::setCurrentElements(const QList<GraphicElement *> &elements)
     m_hasRotation = m_hasSameLabel = m_hasSameColors = m_hasSameFrequency = m_hasSameAudio = m_hasOnlyInputs = true;
     m_canChangeSkin = m_hasSamePriority = true;
     m_hasElements = true;
+    m_hasCustomConfig = true;
     show();
     setEnabled(false);
     int minimumInputs = 0;
@@ -388,6 +397,7 @@ void ElementEditor::setCurrentElements(const QList<GraphicElement *> &elements)
     auto *firstElement = m_elements.constFirst();
     auto *firstInput = qobject_cast<GraphicElementInput *>(firstElement);
     auto elementType = firstElement->elementType();
+    bool hasRemoteElement = false;
 
     for (auto *elm : qAsConst(m_elements)) {
         const auto group = elm->elementGroup();
@@ -427,14 +437,19 @@ void ElementEditor::setCurrentElements(const QList<GraphicElement *> &elements)
         sameElementGroup |= (group == ElementGroup::StaticInput && (firstGroup == ElementGroup::Input));
         m_hasOnlyInputs &= (group == ElementGroup::Input);
         m_canMorph &= sameElementGroup;
+        hasRemoteElement |= elm->elementGroup() == ElementGroup::Remote;
+
+        /* Custom config will appear only if a single object is selected */
+        m_hasCustomConfig &= elm->hasCustomConfig();
+        m_hasCustomConfig &= m_elements.size() == 1;
     }
 
     if (!m_hasSameType) {
         elementType = ElementType::Unknown;
     }
 
-    m_canChangeInputSize = (minimumInputs < maximumInputs);
-    m_canChangeOutputSize = (minimumOutputs < maximumOutputs);
+    m_canChangeInputSize = (minimumInputs < maximumInputs && !hasRemoteElement);
+    m_canChangeOutputSize = (minimumOutputs < maximumOutputs && !hasRemoteElement);
     /* Element type */
     m_ui->groupBox->setTitle(ElementFactory::typeToTitleText(elementType));
     /* Labels */
@@ -845,4 +860,9 @@ void ElementEditor::updateTheme()
             "}";
 
     m_ui->groupBox->setStyleSheet(styleSheet.arg(borderColor));
+}
+
+void ElementEditor::openCustomConfig()
+{
+    m_scene->openConfigAction();
 }

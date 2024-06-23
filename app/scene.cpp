@@ -15,6 +15,7 @@
 #include "qneconnection.h"
 #include "serialization.h"
 #include "thememanager.h"
+#include "remotedeviceconfig.h"
 
 #include <QClipboard>
 #include <QDrag>
@@ -328,6 +329,17 @@ void Scene::updateTheme()
     }
 
     qCDebug(zero) << tr("Finished updating theme.");
+}
+
+void Scene::openConfigAction()
+{
+    const QList<GraphicElement *> elms = selectedElements();
+    if(elms.size() == 1) {
+        RemoteDeviceConfig fc(this, qApp->mainWindow(), elms.first());
+        fc.start();
+    } else {
+        QMessageBox::warning(qApp->mainWindow(), tr( "ERROR" ), "Unable to trigger configure for more than a remote element at once", QMessageBox::Ok);
+    }
 }
 
 QList<QGraphicsItem *> Scene::items(Qt::SortOrder order) const
@@ -1011,6 +1023,11 @@ void Scene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event)
 
     if (auto *connection = qgraphicsitem_cast<QNEConnection *>(itemAt(m_mousePos)); connection && connection->startPort() && connection->endPort()) {
         receiveCommand(new SplitCommand(connection, m_mousePos, this));
+    }
+
+    RemoteDevice *remoteDevice = dynamic_cast<RemoteDevice *>(itemAt(m_mousePos));
+    if (remoteDevice) {
+        openConfigAction();
     }
 
     QGraphicsScene::mouseDoubleClickEvent(event);

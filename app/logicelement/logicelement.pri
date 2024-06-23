@@ -12,6 +12,7 @@ SOURCES += \
     $$PWD/logicnot.cpp \
     $$PWD/logicor.cpp \
     $$PWD/logicoutput.cpp \
+    $$PWD/logicremotedevice.cpp \
     $$PWD/logicsrflipflop.cpp \
     $$PWD/logictflipflop.cpp \
     $$PWD/logicxnor.cpp \
@@ -32,6 +33,7 @@ HEADERS += \
     $$PWD/logicnot.h \
     $$PWD/logicor.h \
     $$PWD/logicoutput.h \
+    $$PWD/logicremotedevice.h \
     $$PWD/logicsrflipflop.h \
     $$PWD/logictflipflop.h \
     $$PWD/logicxnor.h \

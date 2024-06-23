@@ -13,7 +13,7 @@ equals(QT_MAJOR_VERSION, 6) : !versionAtLeast(QT_VERSION, 6.2.0) {
 VERSION = 4.1.12
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
-QT += core gui printsupport multimedia widgets svg
+QT += core gui printsupport multimedia widgets svg network xml
 
 CONFIG += c++17 warn_on strict_c strict_c++
 
@@ -126,9 +126,11 @@ SOURCES += \
     $$PWD/app/lengthdialog.cpp \
     $$PWD/app/logicelement.cpp \
     $$PWD/app/mainwindow.cpp \
+    $$PWD/app/protocol.cpp \
     $$PWD/app/nodes/qneconnection.cpp \
     $$PWD/app/nodes/qneport.cpp \
     $$PWD/app/recentfiles.cpp \
+    $$PWD/app/remotedeviceconfig.cpp \
     $$PWD/app/scene.cpp \
     $$PWD/app/serialization.cpp \
     $$PWD/app/settings.cpp \
@@ -159,9 +161,12 @@ HEADERS += \
     $$PWD/app/lengthdialog.h \
     $$PWD/app/logicelement.h \
     $$PWD/app/mainwindow.h \
+    $$PWD/app/network.h \
+    $$PWD/app/protocol.h \
     $$PWD/app/nodes/qneconnection.h \
     $$PWD/app/nodes/qneport.h \
     $$PWD/app/recentfiles.h \
+    $$PWD/app/remotedeviceconfig.h \
     $$PWD/app/scene.h \
     $$PWD/app/serialization.h \
     $$PWD/app/settings.h \
@@ -183,7 +188,8 @@ FORMS += \
     $$PWD/app/clockdialog.ui \
     $$PWD/app/elementeditor.ui \
     $$PWD/app/lengthdialog.ui \
-    $$PWD/app/mainwindow.ui
+    $$PWD/app/mainwindow.ui \
+    $$PWD/app/remotedeviceconfig.ui
 
 RESOURCES += \
     $$PWD/app/resources/basic/basic.qrc \
@@ -192,6 +198,7 @@ RESOURCES += \
     $$PWD/app/resources/memory/dark/memory_dark.qrc \
     $$PWD/app/resources/memory/light/memory_light.qrc \
     $$PWD/app/resources/misc/misc.qrc \
-    $$PWD/app/resources/output/output.qrc\
+    $$PWD/app/resources/output/output.qrc \
+    $$PWD/app/resources/remote/remote.qrc \
     $$PWD/app/resources/toolbar/toolbar.qrc \
     $$PWD/app/resources/translations/translations.qrc

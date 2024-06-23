@@ -24,8 +24,10 @@
 #include "logictflipflop.h"
 #include "logicxnor.h"
 #include "logicxor.h"
+#include "logicremotedevice.h"
 
 #include <QMetaEnum>
+#include <iostream>
 
 ElementType ElementFactory::textToType(const QString &text)
 {
@@ -175,6 +177,7 @@ std::shared_ptr<LogicElement> ElementFactory::buildLogicElement(GraphicElement *
     case ElementType::Nor:         return std::make_shared<LogicNor>(elm->inputSize());
     case ElementType::Not:         return std::make_shared<LogicNot>();
     case ElementType::Or:          return std::make_shared<LogicOr>(elm->inputSize());
+    case ElementType::RemoteDevice:return std::make_shared<LogicRemoteDevice>(dynamic_cast<RemoteDevice*>(elm));
     case ElementType::SRFlipFlop:  return std::make_shared<LogicSRFlipFlop>();
     case ElementType::TFlipFlop:   return std::make_shared<LogicTFlipFlop>();
     case ElementType::Xnor:        return std::make_shared<LogicXnor>(elm->inputSize());

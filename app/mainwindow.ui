@@ -555,6 +555,7 @@ QTabWidget::pane {
    <addaction name="actionPlay"/>
    <addaction name="actionRestart"/>
    <addaction name="actionWaveform"/>
+   <addaction name="actionGamefication"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QMenuBar" name="menuBar">
@@ -668,6 +669,7 @@ QTabWidget::pane {
     <addaction name="actionPlay"/>
     <addaction name="actionRestart"/>
     <addaction name="actionWaveform"/>
+    <addaction name="actionGamefication"/>
     <addaction name="actionMute"/>
    </widget>
    <widget class="QMenu" name="menuExamples">
@@ -1074,6 +1076,18 @@ QTabWidget::pane {
    </property>
    <property name="shortcut">
     <string>Ctrl+W</string>
+   </property>
+  </action>
+  <action name="actionGamefication">
+   <property name="icon">
+    <iconset resource="resources/toolbar/toolbar.qrc">
+     <normaloff>:/toolbar/gamefication_icon.svg</normaloff>:/toolbar/gamefication_icon.svg</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Gamefication</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+G</string>
    </property>
   </action>
   <action name="actionExportToImage">

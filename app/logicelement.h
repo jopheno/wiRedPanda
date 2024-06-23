@@ -31,6 +31,8 @@ public:
     void setOutputValue(const bool value);
     void setOutputValue(const int index, const bool value);
     void validate();
+    size_t getInputAmount() { return m_inputPairs.size(); }
+    size_t getOutputAmount() { return m_outputValues.size(); }
 
 protected:
     bool updateInputs();
