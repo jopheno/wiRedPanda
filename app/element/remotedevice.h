@@ -34,15 +34,15 @@ struct RemoteLabOption
     std::string getName() const { return name; }
     std::string getUrl() const
     {
-        QString url = QString::fromStdString(this->url);
+        QString url_ = QString::fromStdString(this->url);
 
-        if (!url.endsWith("/"))
-            url.append("/");
+        if (!url_.endsWith("/"))
+            url_.append("/");
 
-        return url.toStdString();
+        return url_.toStdString();
     }
 
-    void setVersion(const std::string &version) { this->version = version; }
+    void setVersion(const std::string &version_) { this->version = version_; }
     std::string getVersion() const { return version; }
     AUTH_METHOD getAuthMethod() const { return authMethod; }
 };
@@ -378,7 +378,10 @@ private slots:
 
     // GraphicElement interface
 public:
-    void setSkin(bool defaultSkin, const QString &filename) override {}
+    void setSkin(bool defaultSkin, const QString &filename) override {
+        Q_UNUSED(defaultSkin)
+        Q_UNUSED(filename)
+    }
     static bool loadSettings(const QDomDocument &xml);
     const std::list<RemoteLabOption> &getOptions() { return options; }
 

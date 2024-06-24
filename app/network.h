@@ -73,10 +73,10 @@ public:
     }
     QString popString()
     {
-        uint16_t size = pop<uint16_t>();
+        uint16_t size_ = pop<uint16_t>();
 
         QByteArray ba;
-        for (int i = 0; i < size; i++)
+        for (int i = 0; i < size_; i++)
             ba.push_back(static_cast<char>(pop<uint8_t>()));
 
         QString ret(ba);
