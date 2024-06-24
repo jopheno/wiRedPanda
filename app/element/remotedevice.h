@@ -378,7 +378,7 @@ private slots:
 
     // GraphicElement interface
 public:
-    void setSkin(__attribute__((unused)) bool defaultSkin, __attribute__((unused)) const QString &filename) override {}
+    void setSkin(bool defaultSkin, const QString &filename) override {}
     static bool loadSettings(const QDomDocument &xml);
     const std::list<RemoteLabOption> &getOptions() { return options; }
 
