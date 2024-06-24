@@ -306,7 +306,7 @@ NetworkOutgoingMessage RemoteProtocol::sendIOInfo(uint16_t latency, const std::l
     NetworkOutgoingMessage msg(3);
 
     msg.addByte<quint16>(latency);
-    msg.addByte<quint16>(mappedPins.size());
+    msg.addByte<quint16>(static_cast<quint16>(mappedPins.size()));
 
     for (const Pin &pin : mappedPins)
     {

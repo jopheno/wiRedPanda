@@ -202,20 +202,20 @@ void RemoteDevice::onTimeRefresh()
     }
 }
 
-bool RemoteDevice::connectTo(const std::string &host, int port, const std::string &token, uint8_t deviceTypeId, uint8_t methodId)
+bool RemoteDevice::connectTo(const std::string &host, int port, const std::string &token, uint8_t deviceTypeId_, uint8_t methodId_)
 {
     std::cout << "Connection to " << host << std::endl;
 
-    this->deviceTypeId = deviceTypeId;
-    this->methodId = methodId;
+    this->deviceTypeId = deviceTypeId_;
+    this->methodId = methodId_;
 
     setAliveSince(QDateTime::currentSecsSinceEpoch());
     socket->connectToHost(QString::fromStdString(host), port);
     if (socket->waitForConnected(5000))
     {
         NetworkOutgoingMessage msg(1);
-        msg.addByte<quint8>(deviceTypeId);
-        msg.addByte<quint8>(methodId);
+        msg.addByte<quint8>(deviceTypeId_);
+        msg.addByte<quint8>(methodId_);
         msg.addString(QString::fromStdString(token));
         msg.addSize();
 
@@ -288,16 +288,16 @@ void RemoteDevice::setupPorts()
     int inputAmount = 0;
     int outputAmount = 0;
 
-    const std::list<Pin> &mappedPins = getMappedPins();
+    const std::list<Pin> &mappedPins_ = getMappedPins();
 
-    if (mappedPins.size() <= 0)
+    if (mappedPins_.size() <= 0)
     {
         setInputSize(0);
         setOutputSize(0);
         return;
     }
 
-    for (const Pin &p : mappedPins)
+    for (const Pin &p : mappedPins_)
     {
         if (p.getType() == PIN_TYPE::PIN_INPUT)
             inputAmount++;
@@ -310,7 +310,7 @@ void RemoteDevice::setupPorts()
 
     inputAmount = 0;
     outputAmount = 0;
-    for (const Pin &p : mappedPins)
+    for (const Pin &p : mappedPins_)
     {
         if (p.getType() == PIN_TYPE::PIN_INPUT)
         {
